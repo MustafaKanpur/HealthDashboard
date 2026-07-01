@@ -1,5 +1,6 @@
-"""Claude API integration: turns a patient record + ML risk score into a
-plain-language clinical summary and a short list of recommendations.
+"""Claude API integration: turns a patient's chart (demographics, condition
+history, recent labs, medications) plus the three ML chronic-disease risk
+scores into a plain-language summary for a clinician doing pre-visit review.
 
 Requires ANTHROPIC_API_KEY to be set in the environment (see .env.example).
 """
@@ -8,7 +9,7 @@ import json
 
 import anthropic
 
-from app.models.schemas import InsightRequest, InsightResponse
+from app.models.schemas import InsightResponse, PatientDetailResponse
 
 MODEL = "claude-opus-4-8"
 
@@ -23,23 +24,24 @@ _OUTPUT_SCHEMA = {
 }
 
 _SYSTEM_PROMPT = (
-    "You are a clinical assistant helping a care team interpret a patient's "
-    "vitals and an ML-derived risk score. Explain the risk in plain language "
-    "and suggest general lifestyle/monitoring recommendations. "
-    "You are not diagnosing and must not replace a clinician's judgment."
+    "You are a clinical assistant helping a physician quickly review a patient's "
+    "chart before a visit. You are given the patient's demographics, condition "
+    "history, most recent labs, current medications, and ML-derived risk scores "
+    "for diabetes, hypertension, and heart disease. Write a concise plain-language "
+    "summary a busy clinician can skim in a few seconds, highlighting anything "
+    "notable (elevated risk scores, abnormal labs, relevant condition/medication "
+    "history), and suggest general monitoring/follow-up considerations. "
+    "You are not diagnosing and must not replace the clinician's judgment."
 )
 
 _client = anthropic.Anthropic()  # reads ANTHROPIC_API_KEY from the environment
 
 
-def generate_insight(request: InsightRequest) -> InsightResponse:
-    patient = request.patient.model_dump()
-    user_content = (
-        f"Patient data: {json.dumps(patient)}\n"
-        f"ML risk score: {request.risk_score}\n"
-    )
-    if request.question:
-        user_content += f"Question from the care team: {request.question}\n"
+def generate_patient_summary(detail: PatientDetailResponse, question: str | None = None) -> InsightResponse:
+    chart = detail.model_dump(mode="json")
+    user_content = f"Patient chart: {json.dumps(chart)}\n"
+    if question:
+        user_content += f"Question from the clinician: {question}\n"
 
     response = _client.messages.create(
         model=MODEL,

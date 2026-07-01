@@ -1,34 +1,16 @@
-"""Inference helpers for the risk-prediction model produced by train.py."""
+"""Inference for the three per-disease risk models produced by train.py."""
 
-from pathlib import Path
+import json
 from functools import lru_cache
+from pathlib import Path
 
 import joblib
+import pandas as pd
 
-from app.models.schemas import PatientRecord, RiskPredictionResponse
+from app.ml.features import TARGETS, build_patient_features
+from app.models.schemas import RiskResult
 
-FEATURE_ORDER = [
-    "age",
-    "sex",
-    "bmi",
-    "systolic_bp",
-    "diastolic_bp",
-    "cholesterol",
-    "glucose",
-    "smoker",
-    "exercise_hours_per_week",
-]
-
-MODEL_PATH = Path(__file__).parent / "model.joblib"
-
-
-@lru_cache(maxsize=1)
-def _load_model():
-    if not MODEL_PATH.exists():
-        raise FileNotFoundError(
-            f"No trained model found at {MODEL_PATH}. Run `python -m app.ml.train --data <csv>` first."
-        )
-    return joblib.load(MODEL_PATH)
+ARTIFACT_DIR = Path(__file__).parent / "artifacts"
 
 
 def _label_for(score: float) -> str:
@@ -39,18 +21,32 @@ def _label_for(score: float) -> str:
     return "high"
 
 
-def predict_risk(patient: PatientRecord) -> RiskPredictionResponse:
-    model = _load_model()
-    features = [
-        patient.age,
-        patient.sex,
-        patient.bmi,
-        patient.systolic_bp,
-        patient.diastolic_bp,
-        patient.cholesterol,
-        patient.glucose,
-        int(patient.smoker),
-        patient.exercise_hours_per_week,
-    ]
-    score = float(model.predict_proba([features])[0][1])
-    return RiskPredictionResponse(risk_score=score, risk_label=_label_for(score))
+@lru_cache(maxsize=1)
+def _metadata() -> dict:
+    path = ARTIFACT_DIR / "metadata.json"
+    if not path.exists():
+        raise FileNotFoundError(
+            f"No trained models found in {ARTIFACT_DIR}. Run `python -m app.ml.train` first."
+        )
+    return json.loads(path.read_text())
+
+
+@lru_cache(maxsize=None)
+def _load_pipeline(target: str):
+    path = ARTIFACT_DIR / f"{target}.joblib"
+    if not path.exists():
+        raise FileNotFoundError(f"No trained model for {target!r} at {path}. Run `python -m app.ml.train` first.")
+    return joblib.load(path)
+
+
+def predict_risk(patient_id: str, target: str) -> RiskResult:
+    pipeline = _load_pipeline(target)
+    feature_names = _metadata()[target]["feature_names"]
+    features = build_patient_features(patient_id, target)
+    row = pd.DataFrame([[features[name] for name in feature_names]], columns=feature_names)
+    score = float(pipeline.predict_proba(row)[0][1])
+    return RiskResult(score=score, label=_label_for(score), model=_metadata()[target]["chosen_model"])
+
+
+def predict_all_risks(patient_id: str) -> dict[str, RiskResult]:
+    return {target: predict_risk(patient_id, target) for target in TARGETS}

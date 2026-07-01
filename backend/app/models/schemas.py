@@ -1,35 +1,74 @@
+from datetime import date
 from typing import Optional
+
 from pydantic import BaseModel, Field
 
 
-class PatientRecord(BaseModel):
-    """A single patient's clinical/demographic record used for ML risk scoring."""
+class PatientSummary(BaseModel):
+    """Row shown in the clinician-facing patient search/browse list."""
 
-    age: int = Field(..., ge=0, le=120)
-    sex: int = Field(..., description="0 = female, 1 = male")
-    bmi: float = Field(..., gt=0)
-    systolic_bp: float
-    diastolic_bp: float
-    cholesterol: float
-    glucose: float
-    smoker: bool = False
-    exercise_hours_per_week: float = Field(default=0.0, ge=0)
+    id: str
+    name: str
+    age: int
+    sex: str
+    city: Optional[str] = None
+    state: Optional[str] = None
 
 
-class RiskPredictionRequest(BaseModel):
-    patient: PatientRecord
+class PatientListResponse(BaseModel):
+    total: int
+    patients: list[PatientSummary]
 
 
-class RiskPredictionResponse(BaseModel):
-    risk_score: float = Field(..., ge=0, le=1, description="Predicted probability of adverse outcome")
-    risk_label: str = Field(..., description="e.g. 'low', 'moderate', 'high'")
+class ConditionEntry(BaseModel):
+    description: str
+    start: Optional[date] = None
+    stop: Optional[date] = None
+    active: bool
 
 
-class InsightRequest(BaseModel):
-    patient: PatientRecord
-    risk_score: Optional[float] = None
+class MedicationEntry(BaseModel):
+    description: str
+    start: Optional[date] = None
+    stop: Optional[date] = None
+    active: bool
+
+
+class LabValue(BaseModel):
+    key: str
+    label: str
+    value: float
+    unit: Optional[str] = None
+    observed_on: Optional[date] = None
+
+
+class RiskResult(BaseModel):
+    score: float = Field(..., ge=0, le=1, description="Predicted probability of the condition")
+    label: str = Field(..., description="'low' | 'moderate' | 'high'")
+    model: str = Field(..., description="Algorithm used for this prediction, e.g. 'random_forest'")
+
+
+class PatientDetailResponse(BaseModel):
+    id: str
+    name: str
+    age: int
+    sex: str
+    birthdate: date
+    deceased: bool
+    race: Optional[str] = None
+    ethnicity: Optional[str] = None
+    marital_status: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    conditions: list[ConditionEntry]
+    medications: list[MedicationEntry]
+    labs: list[LabValue]
+    risk_scores: dict[str, RiskResult] = Field(default_factory=dict)
+
+
+class SummaryRequest(BaseModel):
     question: Optional[str] = Field(
-        default=None, description="Optional free-text question about the patient's data"
+        default=None, description="Optional free-text question from the clinician"
     )
 
 

@@ -1,0 +1,110 @@
+{
+  "diabetes": {
+    "target": "diabetes",
+    "chosen_model": "xgboost",
+    "feature_names": [
+      "age",
+      "sex",
+      "glucose",
+      "total_cholesterol",
+      "hdl_cholesterol",
+      "ldl_cholesterol",
+      "bmi",
+      "systolic_bp",
+      "diastolic_bp",
+      "smoking_status",
+      "chronic_condition_count",
+      "medication_count",
+      "has_hypertension",
+      "has_heart_disease"
+    ],
+    "n_samples": 917,
+    "positive_rate": 0.39585605234460197,
+    "metrics": {
+      "logistic_regression": {
+        "roc_auc": 0.8041466123657905,
+        "pr_auc": 0.7370238986326427
+      },
+      "random_forest": {
+        "roc_auc": 0.9405158583240776,
+        "pr_auc": 0.8751235470426132
+      },
+      "xgboost": {
+        "roc_auc": 0.9500185116623472,
+        "pr_auc": 0.912644250684971
+      }
+    }
+  },
+  "hypertension": {
+    "target": "hypertension",
+    "chosen_model": "random_forest",
+    "feature_names": [
+      "age",
+      "sex",
+      "glucose",
+      "total_cholesterol",
+      "hdl_cholesterol",
+      "ldl_cholesterol",
+      "bmi",
+      "systolic_bp",
+      "diastolic_bp",
+      "smoking_status",
+      "chronic_condition_count",
+      "medication_count",
+      "has_diabetes",
+      "has_heart_disease"
+    ],
+    "n_samples": 917,
+    "positive_rate": 0.31842966194111233,
+    "metrics": {
+      "logistic_regression": {
+        "roc_auc": 0.8074576271186441,
+        "pr_auc": 0.7455253880648739
+      },
+      "random_forest": {
+        "roc_auc": 0.8390508474576271,
+        "pr_auc": 0.7682068171942844
+      },
+      "xgboost": {
+        "roc_auc": 0.8385084745762712,
+        "pr_auc": 0.7623674341702698
+      }
+    }
+  },
+  "heart_disease": {
+    "target": "heart_disease",
+    "chosen_model": "random_forest",
+    "feature_names": [
+      "age",
+      "sex",
+      "glucose",
+      "total_cholesterol",
+      "hdl_cholesterol",
+      "ldl_cholesterol",
+      "bmi",
+      "systolic_bp",
+      "diastolic_bp",
+      "smoking_status",
+      "chronic_condition_count",
+      "medication_count",
+      "has_diabetes",
+      "has_hypertension"
+    ],
+    "n_samples": 917,
+    "positive_rate": 0.13195201744820065,
+    "metrics": {
+      "logistic_regression": {
+        "roc_auc": 0.7192708333333333,
+        "pr_auc": 0.3737698956096317
+      },
+      "random_forest": {
+        "roc_auc": 0.7848958333333332,
+        "pr_auc": 0.48915904519667863
+      },
+      "xgboost": {
+        "roc_auc": 0.7682291666666666,
+        "pr_auc": 0.41185145163919146
+      }
+    }
+  }
+}

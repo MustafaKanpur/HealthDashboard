@@ -1,8 +1,10 @@
-# Health Dashboard
+# Clinician Chronic Disease Risk Dashboard
 
-A health analytics dashboard: a FastAPI backend that trains a scikit-learn
-risk-prediction model on patient data and uses the Claude API to turn
-predictions into plain-language clinical insights, plus a React (Vite)
+A clinician-facing dashboard for browsing Synthea patient records: search
+patients, view a chart (demographics, condition history, recent labs,
+medications), see ML-predicted risk of three chronic diseases (diabetes,
+hypertension, heart disease), and generate a Claude-powered plain-language
+chart summary. FastAPI backend + scikit-learn/XGBoost models + React (Vite)
 frontend.
 
 ## Structure
@@ -12,10 +14,11 @@ health-dashboard/
 ├── backend/
 │   ├── app/
 │   │   ├── main.py       # FastAPI entry point
+│   │   ├── data/         # Synthea CSV loading + query layer
 │   │   ├── models/       # Pydantic request/response schemas
-│   │   ├── ml/           # scikit-learn training + inference
+│   │   ├── ml/           # feature engineering, training, inference
 │   │   └── ai/           # Claude API integration
-│   ├── data/             # Synthea/Kaggle dataset (place CSVs here)
+│   ├── data/              # Synthea CSV export (patients/conditions/observations/medications/encounters)
 │   └── requirements.txt
 ├── frontend/              # React app (Vite)
 └── README.md
@@ -32,13 +35,16 @@ pip install -r requirements.txt
 cp .env.example .env           # then fill in ANTHROPIC_API_KEY
 ```
 
-Train the risk model (expects a CSV in `data/` with columns `age, sex, bmi,
-systolic_bp, diastolic_bp, cholesterol, glucose, smoker,
-exercise_hours_per_week, target`):
+Train the three risk models straight from the Synthea CSVs in `backend/data/`:
 
 ```bash
-python -m app.ml.train --data data/patients.csv
+python -m app.ml.train
 ```
+
+For each of `diabetes`, `hypertension`, and `heart_disease` this trains and
+compares Logistic Regression, Random Forest, and XGBoost (ROC-AUC + PR-AUC on
+a held-out split), keeps the best model per target, and writes
+`app/ml/artifacts/{target}.joblib` + `app/ml/artifacts/metadata.json`.
 
 Run the API:
 
@@ -60,8 +66,28 @@ Dev server: http://localhost:5173
 
 ## API endpoints
 
-| Method | Path                 | Description                                  |
-| ------ | -------------------- | --------------------------------------------- |
-| GET    | `/health`             | Liveness check                                |
-| POST   | `/api/predict-risk`   | Run the trained ML model on a patient record  |
-| POST   | `/api/insight`        | Get a Claude-generated summary + suggestions  |
+| Method | Path                              | Description                                             |
+| ------ | ---------------------------------- | --------------------------------------------------------- |
+| GET    | `/health`                          | Liveness check                                             |
+| GET    | `/api/patients`                    | Search/browse patients (`search`, `limit`, `offset`)       |
+| GET    | `/api/patients/{patient_id}`       | Full chart + ML risk scores for the three target diseases  |
+| POST   | `/api/patients/{patient_id}/summary` | Claude-generated plain-language chart summary (on demand) |
+
+## ML design notes
+
+- **Features**: age, sex, most recent glucose/total-HDL-LDL cholesterol/BMI/
+  systolic & diastolic BP, smoking status, a curated chronic-condition count,
+  active medication count, and comorbidity flags for the *other two* target
+  diseases. See `backend/app/ml/features.py` for the full rationale, including
+  how label leakage is avoided (a target's own diagnosis family is excluded
+  from its own condition-count feature).
+- **Labels**: derived from Synthea's ground-truth `conditions.csv` diagnoses
+  (diabetes, hypertension, heart disease families), so no manual labeling is
+  needed.
+- **Training population**: adults only (age ≥ 18 at a per-patient reference
+  date), since these three conditions are essentially not applicable to
+  Synthea's many pediatric synthetic patients.
+- **Caveat**: risk is predicted from a patient's *current* labs/history, so an
+  already-diagnosed, well-controlled patient (e.g. on antihypertensives with
+  normal BP) can score lower than their diagnosis alone would suggest. This is
+  a "diagnostic-support" framing, not a longitudinal future-risk model.

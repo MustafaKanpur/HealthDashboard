@@ -1,15 +1,23 @@
 from .schemas import (
-    PatientRecord,
-    RiskPredictionRequest,
-    RiskPredictionResponse,
-    InsightRequest,
+    PatientSummary,
+    PatientListResponse,
+    ConditionEntry,
+    MedicationEntry,
+    LabValue,
+    RiskResult,
+    PatientDetailResponse,
+    SummaryRequest,
     InsightResponse,
 )
 
 __all__ = [
-    "PatientRecord",
-    "RiskPredictionRequest",
-    "RiskPredictionResponse",
-    "InsightRequest",
+    "PatientSummary",
+    "PatientListResponse",
+    "ConditionEntry",
+    "MedicationEntry",
+    "LabValue",
+    "RiskResult",
+    "PatientDetailResponse",
+    "SummaryRequest",
     "InsightResponse",
 ]

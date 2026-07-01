@@ -1,42 +1,221 @@
-#root {
-  max-width: 1280px;
+.app-header {
+  background-color: #0f172a;
+  color: #fff;
+  padding: 0.9rem 1.5rem;
+}
+.app-header a {
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.page {
+  max-width: 1000px;
   margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  padding: 1.5rem;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
+/* --- Patient list --- */
+.search-bar {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
 }
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
-}
-
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.search-bar input {
+  flex: 1;
+  padding: 0.55em 0.8em;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+.patient-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+.patient-table th {
+  text-align: left;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #6b7280;
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+.patient-table td {
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+.patient-table tr:last-child td {
+  border-bottom: none;
+}
+.patient-row {
+  cursor: pointer;
+}
+.patient-row:hover {
+  background-color: #f8fafc;
 }
 
-.card {
-  padding: 2em;
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
 }
 
-.read-the-docs {
-  color: #888;
+/* --- Patient detail --- */
+.back-link {
+  display: inline-block;
+  margin-bottom: 1rem;
+}
+
+.patient-header {
+  background: #fff;
+  border-radius: 8px;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  margin-bottom: 1.25rem;
+}
+.patient-header h2 {
+  margin: 0 0 0.25rem;
+}
+.patient-header .meta {
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.risk-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+.risk-card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  border-left: 4px solid #9ca3af;
+}
+.risk-card.low {
+  border-left-color: #16a34a;
+}
+.risk-card.moderate {
+  border-left-color: #d97706;
+}
+.risk-card.high {
+  border-left-color: #dc2626;
+}
+.risk-card .risk-name {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  color: #6b7280;
+  letter-spacing: 0.03em;
+}
+.risk-card .risk-score {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin: 0.15rem 0;
+}
+.risk-card .risk-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+.risk-card.low .risk-label {
+  color: #16a34a;
+}
+.risk-card.moderate .risk-label {
+  color: #d97706;
+}
+.risk-card.high .risk-label {
+  color: #dc2626;
+}
+.risk-card .risk-model {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin-top: 0.35rem;
+}
+
+.section {
+  background: #fff;
+  border-radius: 8px;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  margin-bottom: 1.25rem;
+}
+.section h3 {
+  margin-top: 0;
+}
+
+.lab-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.75rem;
+}
+.lab-item .lab-label {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+.lab-item .lab-value {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+.lab-item .lab-date {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.entry-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 320px;
+  overflow-y: auto;
+}
+.entry-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.9rem;
+}
+.entry-list li:last-child {
+  border-bottom: none;
+}
+.entry-dates {
+  color: #9ca3af;
+  white-space: nowrap;
+  font-size: 0.8rem;
+}
+.badge-active {
+  color: #16a34a;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.summary-box {
+  white-space: pre-wrap;
+  line-height: 1.6;
+}
+.summary-box ul {
+  padding-left: 1.2rem;
+}
+
+.empty-state {
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.error-banner {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
 }
