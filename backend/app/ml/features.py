@@ -1,11 +1,9 @@
 """Feature engineering for the three chronic-disease risk models.
 
 Builds one shared feature table (`_full_feature_table`) from the Synthea data
-layer, then slices it two ways:
-  - `build_training_data(target)` — adult patients only, for `train.py`.
-  - `build_patient_features(patient_id, target)` — one row, for `infer.py`.
-
-Using the same table for both means training and serving can never drift apart.
+layer. `train.py` slices it to adults for `build_training_data(target)`;
+`infer.py` uses the full table directly (see `predict_all_risks_bulk`) so
+training and serving can never drift apart.
 """
 
 from functools import lru_cache
@@ -15,7 +13,6 @@ import pandas as pd
 from app.data.loader import load_patients
 from app.data.repository import (
     NUMERIC_LABS,
-    PatientNotFoundError,
     active_medication_counts,
     ages,
     conditions_by_patient,
@@ -148,12 +145,3 @@ def build_training_data(target: str) -> tuple[pd.DataFrame, pd.Series, list[str]
     X = adults[feature_names]
     y = adults[f"has_{target}"].astype(int)
     return X, y, feature_names
-
-
-def build_patient_features(patient_id: str, target: str) -> dict:
-    """Single-patient feature row, in the same shape used at training time."""
-    table = _full_feature_table()
-    if patient_id not in table.index:
-        raise PatientNotFoundError(f"No patient with id {patient_id}")
-    row = table.loc[patient_id]
-    return row[feature_names_for(target)].to_dict()

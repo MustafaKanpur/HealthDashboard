@@ -1,11 +1,13 @@
-# Clinician Chronic Disease Risk Dashboard
+# Vitalis
 
-A clinician-facing dashboard for browsing Synthea patient records: search
-patients, view a chart (demographics, condition history, recent labs,
-medications), see ML-predicted risk of three chronic diseases (diabetes,
-hypertension, heart disease), and generate a Claude-powered plain-language
-chart summary. FastAPI backend + scikit-learn/XGBoost models + React (Vite)
-frontend.
+A clinician-facing dashboard for browsing Synthea patient records: search and
+filter patients (demographics, condition category, medication, smoking
+status, disease risk), view a chart (categorized condition history, recent
+labs, medications), see ML-predicted risk of three chronic diseases (diabetes,
+hypertension, heart disease) with a plain-language "why" behind each score,
+compare multiple patients side by side, and generate a Claude-powered
+plain-language chart summary. FastAPI backend + scikit-learn/XGBoost models +
+React (Vite) frontend.
 
 ## Structure
 
@@ -69,8 +71,9 @@ Dev server: http://localhost:5173
 | Method | Path                              | Description                                             |
 | ------ | ---------------------------------- | --------------------------------------------------------- |
 | GET    | `/health`                          | Liveness check                                             |
-| GET    | `/api/patients`                    | Search/browse patients (`search`, `limit`, `offset`)       |
-| GET    | `/api/patients/{patient_id}`       | Full chart + ML risk scores for the three target diseases  |
+| GET    | `/api/meta/condition-categories`   | List of condition category names, for filter dropdowns     |
+| GET    | `/api/patients`                    | Search/filter patients (`search`, `sex`, `min_age`, `max_age`, `condition_category`, `medication`, `smoking_status`, `risk_target`, `risk_min_label`, `limit`, `offset`) |
+| GET    | `/api/patients/{patient_id}`       | Full chart (with categorized conditions) + ML risk scores + explanation factors |
 | POST   | `/api/patients/{patient_id}/summary` | Claude-generated plain-language chart summary (on demand) |
 
 ## ML design notes

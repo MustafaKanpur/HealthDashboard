@@ -13,6 +13,9 @@ class PatientSummary(BaseModel):
     sex: str
     city: Optional[str] = None
     state: Optional[str] = None
+    glucose_trend: list[float] = Field(
+        default_factory=list, description="Up to the last 6 glucose readings, chronological, for a row sparkline"
+    )
 
 
 class PatientListResponse(BaseModel):
@@ -22,6 +25,7 @@ class PatientListResponse(BaseModel):
 
 class ConditionEntry(BaseModel):
     description: str
+    category: str
     start: Optional[date] = None
     stop: Optional[date] = None
     active: bool
@@ -46,6 +50,9 @@ class RiskResult(BaseModel):
     score: float = Field(..., ge=0, le=1, description="Predicted probability of the condition")
     label: str = Field(..., description="'low' | 'moderate' | 'high'")
     model: str = Field(..., description="Algorithm used for this prediction, e.g. 'random_forest'")
+    factors: list[str] = Field(
+        default_factory=list, description="Heuristic reference-range reasons contributing to this risk score"
+    )
 
 
 class PatientDetailResponse(BaseModel):
@@ -64,6 +71,24 @@ class PatientDetailResponse(BaseModel):
     medications: list[MedicationEntry]
     labs: list[LabValue]
     risk_scores: dict[str, RiskResult] = Field(default_factory=dict)
+
+
+class LabHistoryPoint(BaseModel):
+    observed_on: date
+    value: float
+    is_anomaly: bool = Field(..., description="Simple population z-score outlier flag (|z| > 2.5), not clinical ML")
+
+
+class ShapContribution(BaseModel):
+    feature: str
+    value: float = Field(..., description="SHAP value: positive pushes risk up, negative pushes it down")
+
+
+class PanelRiskPoint(BaseModel):
+    patient_id: str
+    age: int
+    risk_score: float = Field(..., ge=0, le=100)
+    tier: str = Field(..., description="'low' | 'medium' | 'high'")
 
 
 class SummaryRequest(BaseModel):
