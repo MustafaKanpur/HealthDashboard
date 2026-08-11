@@ -66,6 +66,27 @@ npm run dev
 
 Dev server: http://localhost:5173
 
+## Deployment
+
+- **Frontend → Vercel**: set the project's **Root Directory** to `frontend`
+  (this is a monorepo, not a single-package repo). `frontend/vercel.json`
+  adds the SPA fallback rewrite React Router needs. Set the
+  `VITE_API_BASE_URL` environment variable to your deployed backend's URL.
+- **Backend → Render**: `render.yaml` at the repo root is a Render
+  [Blueprint](https://render.com/docs/blueprint-spec) — in the Render
+  dashboard, "New +" → "Blueprint" → point it at this repo. It builds from
+  `backend/` and starts `uvicorn`. You'll be prompted to fill in two env vars
+  it deliberately leaves blank (`sync: false`):
+  - `ANTHROPIC_API_KEY` — your Claude API key
+  - `ALLOWED_ORIGINS` — your deployed Vercel URL (comma-separated if more
+    than one, e.g. a preview + production URL); the backend's CORS
+    middleware reads this and defaults to `http://localhost:5173` if unset.
+  Free-tier Render services spin down after inactivity, so the first request
+  after a while will be slow (cold start) — expected, not a bug.
+- The trained model artifacts (`backend/app/ml/artifacts/*.joblib`) and the
+  Synthea CSVs are committed to the repo, so Render's build doesn't need to
+  retrain — it just installs dependencies and starts the server.
+
 ## API endpoints
 
 | Method | Path                              | Description                                             |

@@ -1,3 +1,5 @@
+import os
+
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -26,9 +28,16 @@ from app.models import (
 
 app = FastAPI(title="Vitalis API", version="0.3.0")
 
+# Comma-separated list, e.g. "http://localhost:5173,https://your-app.vercel.app"
+_allowed_origins = [
+    origin.strip()
+    for origin in os.environ.get("ALLOWED_ORIGINS", "http://localhost:5173").split(",")
+    if origin.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=_allowed_origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -164,6 +173,8 @@ def patient_risk_explanation(patient_id: str, target: str):
 
 @app.post("/api/patients/{patient_id}/summary", response_model=InsightResponse)
 def patient_summary(patient_id: str, request: SummaryRequest = SummaryRequest()):
+    if not os.environ.get("ANTHROPIC_API_KEY"):
+        raise HTTPException(status_code=503, detail="AI summary is not configured (missing ANTHROPIC_API_KEY).")
     try:
         detail = get_patient_detail(patient_id)
         detail.risk_scores = predict_all_risks(patient_id)
