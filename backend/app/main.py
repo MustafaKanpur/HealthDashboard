@@ -35,9 +35,19 @@ _allowed_origins = [
     if origin.strip()
 ]
 
+# Vercel mints a new URL with a random hash for every preview deployment
+# (e.g. health-dashboard-<hash>-<team-scope>.vercel.app), so an exact-match
+# origin list alone breaks on every push. Match any deployment of this
+# Vercel project by pattern instead; override via env var if the project is
+# ever renamed.
+_allowed_origin_regex = os.environ.get(
+    "ALLOWED_ORIGIN_REGEX", r"https://health-dashboard(-[\w]+)*\.vercel\.app"
+)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_allowed_origins,
+    allow_origin_regex=_allowed_origin_regex,
     allow_methods=["*"],
     allow_headers=["*"],
 )
