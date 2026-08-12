@@ -1,5 +1,9 @@
 # Vitalis
 
+**Live demo: [health-dashboard-theta-five.vercel.app](https://health-dashboard-theta-five.vercel.app/)**
+(frontend on Vercel, backend on Render — the backend is on a free tier, so
+the first request after a period of inactivity can take 30-50s to wake up).
+
 A clinician-facing dashboard for browsing Synthea patient records: search and
 filter patients (demographics, condition category, medication, smoking
 status, disease risk), view a chart (categorized condition history, recent
@@ -68,21 +72,35 @@ Dev server: http://localhost:5173
 
 ## Deployment
 
+Live at [health-dashboard-theta-five.vercel.app](https://health-dashboard-theta-five.vercel.app/)
+(frontend) + [vitalis-api-4ils.onrender.com](https://vitalis-api-4ils.onrender.com)
+(backend API). To deploy your own copy:
+
 - **Frontend → Vercel**: set the project's **Root Directory** to `frontend`
   (this is a monorepo, not a single-package repo). `frontend/vercel.json`
   adds the SPA fallback rewrite React Router needs. Set the
-  `VITE_API_BASE_URL` environment variable to your deployed backend's URL.
+  `VITE_API_BASE_URL` environment variable to your deployed backend's URL,
+  and redeploy after setting it — Vite bakes `VITE_*` vars into the build,
+  it doesn't read them at runtime.
 - **Backend → Render**: `render.yaml` at the repo root is a Render
   [Blueprint](https://render.com/docs/blueprint-spec) — in the Render
   dashboard, "New +" → "Blueprint" → point it at this repo. It builds from
   `backend/` and starts `uvicorn`. You'll be prompted to fill in two env vars
   it deliberately leaves blank (`sync: false`):
-  - `ANTHROPIC_API_KEY` — your Claude API key
-  - `ALLOWED_ORIGINS` — your deployed Vercel URL (comma-separated if more
-    than one, e.g. a preview + production URL); the backend's CORS
-    middleware reads this and defaults to `http://localhost:5173` if unset.
+  - `ANTHROPIC_API_KEY` — your Claude API key (the AI summary endpoint
+    returns a clean 503 rather than crashing if this is left unset)
+  - `ALLOWED_ORIGINS` — your deployed Vercel URL, comma-separated if more
+    than one; defaults to `http://localhost:5173` if unset
   Free-tier Render services spin down after inactivity, so the first request
   after a while will be slow (cold start) — expected, not a bug.
+- **CORS and Vercel preview deployments**: Vercel mints a new URL with a
+  random hash for every preview deploy (e.g.
+  `health-dashboard-<hash>-<team-scope>.vercel.app`), which an exact-match
+  `ALLOWED_ORIGINS` list can't keep up with. `backend/app/main.py` also
+  matches any deployment of the Vercel project by regex
+  (`ALLOWED_ORIGIN_REGEX`, defaults to matching `health-dashboard*.vercel.app`)
+  so new preview URLs work without touching Render config — update the
+  default pattern if the Vercel project is ever renamed.
 - The trained model artifacts (`backend/app/ml/artifacts/*.joblib`) and the
   Synthea CSVs are committed to the repo, so Render's build doesn't need to
   retrain — it just installs dependencies and starts the server.
@@ -93,9 +111,14 @@ Dev server: http://localhost:5173
 | ------ | ---------------------------------- | --------------------------------------------------------- |
 | GET    | `/health`                          | Liveness check                                             |
 | GET    | `/api/meta/condition-categories`   | List of condition category names, for filter dropdowns     |
-| GET    | `/api/patients`                    | Search/filter patients (`search`, `sex`, `min_age`, `max_age`, `condition_category`, `medication`, `smoking_status`, `risk_target`, `risk_min_label`, `limit`, `offset`) |
-| GET    | `/api/patients/{patient_id}`       | Full chart (with categorized conditions) + ML risk scores + explanation factors |
+| GET    | `/api/patients`                    | Search/filter patients (`search`, `sex`, `min_age`, `max_age`, `condition_category`, `medication`, `smoking_status`, `risk_target`, `risk_min_label`, `limit`, `offset`); each row includes a recent glucose trend for the list-view sparkline |
+| GET    | `/api/risk-summary`                | Panel-wide age/risk-score/tier for every patient matching the same filters as `/api/patients` (unpaginated), for the risk distribution/scatter charts |
+| GET    | `/api/patients/{patient_id}`       | Full chart (with categorized conditions) + ML risk scores + heuristic explanation factors |
+| GET    | `/api/patients/{patient_id}/labs/{lab_key}/history` | Chronological readings for one lab, each flagged with a population z-score anomaly indicator |
+| GET    | `/api/patients/{patient_id}/risk/{target}/explain` | Real per-feature SHAP contributions for one risk target, from the trained model itself |
 | POST   | `/api/patients/{patient_id}/summary` | Claude-generated plain-language chart summary (on demand) |
+
+Interactive API docs (Swagger UI): [vitalis-api-4ils.onrender.com/docs](https://vitalis-api-4ils.onrender.com/docs)
 
 ## ML design notes
 
