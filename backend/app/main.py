@@ -1,9 +1,19 @@
 import os
 
-from fastapi import FastAPI, HTTPException, Query
-from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
 
-from app.ai import generate_patient_summary
+# Must run before any app.* import — app.ai.claude_client constructs its
+# Anthropic client (and caches the resolved api_key) at module import time,
+# so ANTHROPIC_API_KEY has to already be in the environment by then. Render
+# sets real env vars directly, so this is a no-op there; locally it's what
+# actually makes backend/.env do anything (python-dotenv was a declared
+# dependency but was never wired up before this).
+load_dotenv()
+
+from fastapi import FastAPI, HTTPException, Query  # noqa: E402
+from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
+
+from app.ai import generate_patient_summary  # noqa: E402
 from app.data import (
     CATEGORY_NAMES,
     LAB_CODES,

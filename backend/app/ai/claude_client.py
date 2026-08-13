@@ -23,6 +23,18 @@ _OUTPUT_SCHEMA = {
     "additionalProperties": False,
 }
 
+# Structured output is enforced via a forced tool call (input_schema =
+# _OUTPUT_SCHEMA), not a "response format" request param — the Messages API
+# has no such param, and calling it with one raises TypeError at request time.
+_TOOL_NAME = "provide_chart_summary"
+_TOOLS = [
+    {
+        "name": _TOOL_NAME,
+        "description": "Provide the structured clinical chart summary and recommendations.",
+        "input_schema": _OUTPUT_SCHEMA,
+    }
+]
+
 _SYSTEM_PROMPT = (
     "You are a clinical assistant helping a physician quickly review a patient's "
     "chart before a visit. You are given the patient's demographics, condition "
@@ -47,10 +59,10 @@ def generate_patient_summary(detail: PatientDetailResponse, question: str | None
         model=MODEL,
         max_tokens=1024,
         system=_SYSTEM_PROMPT,
-        output_config={"format": {"type": "json_schema", "schema": _OUTPUT_SCHEMA}},
+        tools=_TOOLS,
+        tool_choice={"type": "tool", "name": _TOOL_NAME},
         messages=[{"role": "user", "content": user_content}],
     )
 
-    text = next(block.text for block in response.content if block.type == "text")
-    data = json.loads(text)
-    return InsightResponse(**data)
+    tool_use = next(block for block in response.content if block.type == "tool_use")
+    return InsightResponse(**tool_use.input)
