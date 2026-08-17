@@ -195,6 +195,9 @@ function PatientDetail() {
   const [summaryLoading, setSummaryLoading] = useState(false)
   const [summaryError, setSummaryError] = useState(null)
 
+  const [showActiveConditions, setShowActiveConditions] = useState(true)
+  const [showInactiveConditions, setShowInactiveConditions] = useState(true)
+
   useEffect(() => {
     let cancelled = false
     setLoading(true)
@@ -233,6 +236,10 @@ function PatientDetail() {
     name: RISK_LABELS[key] || key,
     riskScore: risk.score * 100,
   }))
+
+  const filteredConditions = patient.conditions.filter(
+    (condition) => (condition.active && showActiveConditions) || (!condition.active && showInactiveConditions)
+  )
 
   return (
     <div>
@@ -317,12 +324,34 @@ function PatientDetail() {
 
       <div className="section">
         <h3>
-          <IconClipboard size={17} /> Condition History ({patient.conditions.length})
+          <IconClipboard size={17} /> Condition History ({filteredConditions.length})
         </h3>
+        {patient.conditions.length > 0 && (
+          <div className="condition-filters">
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={showActiveConditions}
+                onChange={() => setShowActiveConditions(!showActiveConditions)}
+              />
+              Active
+            </label>
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={showInactiveConditions}
+                onChange={() => setShowInactiveConditions(!showInactiveConditions)}
+              />
+              Inactive
+            </label>
+          </div>
+        )}
         {patient.conditions.length === 0 ? (
           <p className="empty-state">No conditions on file.</p>
+        ) : filteredConditions.length === 0 ? (
+          <p className="empty-state">No conditions match the current filters.</p>
         ) : (
-          groupByCategory(patient.conditions).map(([category, conditions]) => (
+          groupByCategory(filteredConditions).map(([category, conditions]) => (
             <ConditionGroup key={category} category={category} conditions={conditions} />
           ))
         )}
