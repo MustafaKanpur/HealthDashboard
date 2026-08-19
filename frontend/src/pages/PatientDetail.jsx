@@ -197,6 +197,8 @@ function PatientDetail() {
 
   const [showActiveConditions, setShowActiveConditions] = useState(true)
   const [showInactiveConditions, setShowInactiveConditions] = useState(true)
+  const [showActiveMedications, setShowActiveMedications] = useState(true)
+  const [showInactiveMedications, setShowInactiveMedications] = useState(true)
 
   useEffect(() => {
     let cancelled = false
@@ -239,6 +241,10 @@ function PatientDetail() {
 
   const filteredConditions = patient.conditions.filter(
     (condition) => (condition.active && showActiveConditions) || (!condition.active && showInactiveConditions)
+  )
+
+  const filteredMedications = patient.medications.filter(
+    (medication) => (medication.active && showActiveMedications) || (!medication.active && showInactiveMedications)
   )
 
   return (
@@ -359,13 +365,35 @@ function PatientDetail() {
 
       <div className="section">
         <h3>
-          <IconPill size={17} /> Medications ({patient.medications.length})
+          <IconPill size={17} /> Medications ({filteredMedications.length})
         </h3>
+        {patient.medications.length > 0 && (
+          <div className="condition-filters">
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={showActiveMedications}
+                onChange={() => setShowActiveMedications(!showActiveMedications)}
+              />
+              Active
+            </label>
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={showInactiveMedications}
+                onChange={() => setShowInactiveMedications(!showInactiveMedications)}
+              />
+              Inactive
+            </label>
+          </div>
+        )}
         {patient.medications.length === 0 ? (
           <p className="empty-state">No medications on file.</p>
+        ) : filteredMedications.length === 0 ? (
+          <p className="empty-state">No medications match the current filters.</p>
         ) : (
           <ul className="entry-list">
-            {patient.medications.map((medication, index) => (
+            {filteredMedications.map((medication, index) => (
               <li key={index}>
                 <span>{medication.description}</span>
                 <span className="entry-dates">
