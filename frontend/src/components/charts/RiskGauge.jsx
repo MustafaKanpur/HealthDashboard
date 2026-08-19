@@ -40,8 +40,10 @@ function RiskGauge({ score }) {
   const needle = pointOnArc(R - TRACK_WIDTH / 2 - 6, clamped)
   const color = riskTierColor(clamped)
 
+  const tier = riskTierLabel(clamped)
+
   return (
-    <div className="risk-gauge">
+    <div className={`risk-gauge ${tier}`}>
       <svg viewBox="0 0 200 112" width="100%" role="img" aria-label={`Risk score ${Math.round(clamped)} of 100`}>
         {BANDS.map((band) => (
           <path
@@ -56,11 +58,19 @@ function RiskGauge({ score }) {
         <path d={describeArc(R, 0, clamped)} stroke={color} strokeWidth={TRACK_WIDTH} strokeLinecap="round" fill="none" />
         <line x1={CX} y1={CY} x2={needle.x} y2={needle.y} stroke={CHART_COLORS.text} strokeWidth={3} strokeLinecap="round" />
         <circle cx={CX} cy={CY} r={6} fill={CHART_COLORS.text} />
-        <text x={CX} y={78} textAnchor="middle" fontSize="26" fontWeight="700" fill={color}>
+        <text
+          x={CX}
+          y={78}
+          textAnchor="middle"
+          fontSize="26"
+          fontWeight="600"
+          fill={color}
+          style={{ fontFamily: 'var(--font-mono)' }}
+        >
           {Math.round(clamped)}
         </text>
         <text x={CX} y={96} textAnchor="middle" fontSize="11" fontWeight="600" fill={CHART_COLORS.textMuted} className="risk-gauge-tier">
-          {riskTierLabel(clamped)} risk
+          {tier} risk
         </text>
       </svg>
     </div>

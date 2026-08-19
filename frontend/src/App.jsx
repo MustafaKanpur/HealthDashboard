@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, Route, Routes, useNavigate } from 'react-router-dom'
+import { Link, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import PatientList from './pages/PatientList.jsx'
 import PatientDetail from './pages/PatientDetail.jsx'
 import ComparePatients from './pages/ComparePatients.jsx'
@@ -9,6 +9,7 @@ import './App.css'
 function App() {
   const [selectedIds, setSelectedIds] = useState([])
   const navigate = useNavigate()
+  const location = useLocation()
 
   const toggleSelect = (id) => {
     setSelectedIds((prev) => (prev.includes(id) ? prev.filter((existing) => existing !== id) : [...prev, id]))
@@ -18,26 +19,36 @@ function App() {
     navigate(`/compare?ids=${selectedIds.join(',')}`)
   }
 
+  const patientsActive = location.pathname === '/' || location.pathname.startsWith('/patients')
+
   return (
-    <>
-      <header className="app-header">
+    <div className="app-shell">
+      <aside className="app-sidebar">
         <Link to="/" className="brand">
           <span className="brand-mark">
             <IconPulse size={17} strokeWidth={2.2} />
           </span>
           Vitalis
         </Link>
-      </header>
-      <main className="page">
-        <Routes>
-          <Route
-            path="/"
-            element={<PatientList selectedIds={selectedIds} onToggleSelect={toggleSelect} />}
-          />
-          <Route path="/patients/:patientId" element={<PatientDetail />} />
-          <Route path="/compare" element={<ComparePatients />} />
-        </Routes>
-      </main>
+        <nav className="sidebar-nav">
+          <Link to="/" className={`nav-item ${patientsActive ? 'active' : ''}`}>
+            <IconUsers size={16} />
+            Patients
+          </Link>
+        </nav>
+      </aside>
+      <div className="app-main">
+        <main className="page">
+          <Routes>
+            <Route
+              path="/"
+              element={<PatientList selectedIds={selectedIds} onToggleSelect={toggleSelect} />}
+            />
+            <Route path="/patients/:patientId" element={<PatientDetail />} />
+            <Route path="/compare" element={<ComparePatients />} />
+          </Routes>
+        </main>
+      </div>
       {selectedIds.length >= 2 && (
         <div className="compare-bar">
           <span>{selectedIds.length} patients selected</span>
@@ -50,7 +61,7 @@ function App() {
           </button>
         </div>
       )}
-    </>
+    </div>
   )
 }
 

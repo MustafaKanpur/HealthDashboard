@@ -165,6 +165,7 @@ function PatientList({ selectedIds, onToggleSelect }) {
 
   return (
     <div>
+      <h1 className="page-title">Patients</h1>
       <div className="search-bar">
         <span className="field-icon">
           <IconSearch size={16} />

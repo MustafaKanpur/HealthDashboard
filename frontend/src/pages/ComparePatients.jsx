@@ -50,6 +50,7 @@ function ComparePatients() {
   if (ids.length < 2) {
     return (
       <div>
+        <h1 className="page-title">Compare Patients</h1>
         <Link className="back-link" to="/">
           <IconArrowLeft size={15} /> Back to patient search
         </Link>
@@ -63,6 +64,7 @@ function ComparePatients() {
 
   return (
     <div>
+      <h1 className="page-title">Compare Patients</h1>
       <Link className="back-link" to="/">
         <IconArrowLeft size={15} /> Back to patient search
       </Link>

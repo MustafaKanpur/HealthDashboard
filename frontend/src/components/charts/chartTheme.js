@@ -1,8 +1,9 @@
 // Shared color tokens for chart components. Values mirror the CSS custom
-// properties defined in ../../index.css (soft-blue palette + reserved status
-// colors) — keep these two files in sync if the palette changes. Charting
-// libraries need literal values (not `var(--x)`) so charts render correctly
-// even where the app stylesheet isn't in the cascade (e.g. exported/printed).
+// properties defined in ../../index.css (blue/white clinical palette +
+// reserved status colors) — keep these two files in sync if the palette
+// changes. Charting libraries need literal values (not `var(--x)`) so charts
+// render correctly even where the app stylesheet isn't in the cascade (e.g.
+// exported/printed).
 
 export const CHART_COLORS = {
   good: '#15803d',
@@ -11,14 +12,14 @@ export const CHART_COLORS = {
   warningBg: '#fdf0da',
   critical: '#b91c1c',
   criticalBg: '#fbe4e4',
-  accent: '#2a78d6',
-  accentSoft: '#cde2fb',
-  text: '#101828',
-  textMuted: '#5b6b7f',
-  textFaint: '#94a3b8',
-  border: '#dfe8f3',
+  accent: '#1a56db',
+  accentSoft: '#eef3fc',
+  text: '#0f2a5c',
+  textMuted: '#4b5a72',
+  textFaint: '#8695ac',
+  border: '#dce6f5',
   surface: '#ffffff',
-  surfaceTint: '#f8fbfe',
+  surfaceTint: '#eef3fc',
 }
 
 /** 0-100 risk score -> tier color, per the low <33 / moderate 33-66 / high >66 bands. */

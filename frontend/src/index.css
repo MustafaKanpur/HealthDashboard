@@ -1,33 +1,51 @@
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
+@import '@fontsource/ibm-plex-mono/500.css';
+@import '@fontsource/ibm-plex-mono/600.css';
+
 :root {
-  /* Soft blue ramp (validated sequential scale — light -> dark) */
-  --blue-50: #eef5fd;
-  --blue-100: #cde2fb;
-  --blue-150: #b7d3f6;
-  --blue-200: #9ec5f4;
-  --blue-300: #6da7ec;
-  --blue-400: #3987e5;
-  --blue-450: #2a78d6;
-  --blue-500: #256abf;
-  --blue-550: #1c5cab;
-  --blue-600: #184f95;
-  --blue-650: #104281;
-  --blue-700: #0d366b;
-
-  --color-bg: #f4f8fc;
+  /* --- Core palette (exact values — clinical blue/white, not a generic SaaS theme) --- */
+  --color-primary: #1a56db;
+  --color-navy: #0f2a5c;
+  --color-bg: #f5f8fd;
   --color-surface: #ffffff;
-  --color-surface-tint: #f8fbfe;
-  --color-border: #dfe8f3;
-  --color-text: #101828;
-  --color-text-muted: #5b6b7f;
-  --color-text-faint: #94a3b8;
+  --color-slate: #4b5a72;
+  --color-border: #dce6f5;
 
-  --color-accent: var(--blue-450);
-  --color-accent-hover: var(--blue-550);
-  --color-accent-soft: var(--blue-50);
-  --color-accent-soft-strong: var(--blue-100);
-  --color-accent-ring: rgba(42, 120, 214, 0.18);
+  /* Derived interactive states — computed from the two core blues above,
+     never a third invented hue, so hover/press/soft-wash all stay "in family". */
+  --color-primary-hover: #15419e;
+  --color-primary-active: var(--color-navy);
+  --color-primary-soft: rgba(26, 86, 219, 0.07);
+  --color-primary-soft-strong: rgba(26, 86, 219, 0.14);
+  --color-focus-ring: #1a56db;
 
-  /* Status palette (reserved meaning — icon + label always, never color alone) */
+  /* Back-compat aliases so every existing component keeps working unchanged
+     while pointing at the new palette (single source of truth). */
+  --color-text: var(--color-navy);
+  --color-text-muted: var(--color-slate);
+  --color-text-faint: #8695ac;
+  --color-surface-tint: #eef3fc;
+  --color-accent: var(--color-primary);
+  --color-accent-hover: var(--color-primary-hover);
+  --color-accent-soft: var(--color-primary-soft);
+  --color-accent-soft-strong: var(--color-primary-soft-strong);
+  --color-accent-ring: var(--color-primary-soft-strong);
+  --blue-50: #eef3fc;
+  --blue-100: var(--color-primary-soft-strong);
+  --blue-400: #2f66e0;
+  --blue-450: var(--color-primary);
+  --blue-500: #1849c4;
+  --blue-550: var(--color-primary-hover);
+  --blue-600: #123380;
+  --blue-650: var(--color-navy);
+  --blue-700: #0a1d40;
+
+  /* Status palette — functional only. Reserved for actual risk-tier data
+     (gauge, tier badges, tier-colored indicators); never used decoratively
+     for buttons, nav, or non-risk chart accents. */
   --color-good: #15803d;
   --color-good-icon: #0ca30c;
   --color-good-bg: #e4f7e7;
@@ -39,17 +57,44 @@
   --color-critical: #b91c1c;
   --color-critical-icon: #d03b3b;
   --color-critical-bg: #fbe4e4;
+  --color-critical-border: #f3c6c6;
 
-  --radius-sm: 7px;
-  --radius-md: 11px;
-  --radius-lg: 16px;
-  --shadow-sm: 0 1px 2px rgba(16, 24, 55, 0.05);
-  --shadow-md: 0 8px 24px rgba(16, 24, 55, 0.10);
+  /* Soft "glow" halos per risk tier — the signature treatment for flagged
+     risk indicators: a low-opacity colored shadow, not a solid fill/border. */
+  --glow-good: 0 0 0 1px rgba(12, 163, 12, 0.16), 0 6px 20px -4px rgba(12, 163, 12, 0.28);
+  --glow-warning: 0 0 0 1px rgba(242, 163, 15, 0.18), 0 6px 20px -4px rgba(242, 163, 15, 0.3);
+  --glow-critical: 0 0 0 1px rgba(208, 59, 59, 0.18), 0 6px 20px -4px rgba(208, 59, 59, 0.32);
 
-  font-family: 'Inter', system-ui, -apple-system, Avenir, Helvetica, Arial, sans-serif;
+  /* --- Typography --- */
+  --font-sans: 'Inter', system-ui, -apple-system, Avenir, Helvetica, Arial, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+
+  --text-page-title: 28px;
+  --text-section-header: 18px;
+  --text-body: 14px;
+  --text-data: 16px;
+
+  /* --- 8px spacing grid (use these, not arbitrary rem values) --- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  /* --- Shape / elevation --- */
+  --radius-sm: 8px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --shadow-sm: 0 1px 3px rgba(15, 42, 92, 0.08);
+  --shadow-md: 0 8px 24px rgba(15, 42, 92, 0.12);
+
+  font-family: var(--font-sans);
   line-height: 1.5;
   font-weight: 400;
-  color: var(--color-text);
+  font-size: 16px;
+  color: var(--color-navy);
   background-color: var(--color-bg);
   -webkit-font-smoothing: antialiased;
 }
@@ -62,20 +107,59 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  font-size: var(--text-body);
+  color: var(--color-navy);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 a {
-  color: var(--color-accent);
+  color: var(--color-primary);
   text-decoration: none;
 }
 a:hover {
-  color: var(--color-accent-hover);
+  color: var(--color-primary-hover);
 }
 
 h1,
 h2,
 h3 {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  color: var(--color-navy);
   letter-spacing: -0.01em;
+}
+
+.page-title {
+  font-size: var(--text-page-title);
+  font-weight: 700;
+  color: var(--color-navy);
+  margin: 0 0 var(--space-5);
+}
+
+/* Numeric/data figures — risk scores, lab values, table numerics. Visually
+   distinguishes measured data from prose at a glance. */
+.mono,
+.data-figure {
+  font-family: var(--font-mono);
+  font-size: var(--text-data);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Focus visibility (never remove without replacing) --- */
+:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
 }
 
 /* --- Buttons --- */
@@ -87,63 +171,66 @@ button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.45em;
+  gap: var(--space-2);
   border-radius: var(--radius-sm);
   border: 1px solid var(--color-border);
-  padding: 0.55em 1.05em;
+  padding: var(--space-2) var(--space-4);
   font-size: 0.88em;
   font-weight: 600;
   font-family: inherit;
-  color: var(--color-text);
+  color: var(--color-navy);
   background-color: var(--color-surface);
   cursor: pointer;
-  transition: border-color 0.15s, background-color 0.15s, color 0.15s, box-shadow 0.15s, transform 0.05s;
+  transition: border-color 150ms ease-out, background-color 150ms ease-out, color 150ms ease-out,
+    box-shadow 150ms ease-out, transform 150ms ease-out;
 }
 .btn svg {
   flex-shrink: 0;
 }
 .btn:hover:not(:disabled) {
-  border-color: var(--color-accent);
-  color: var(--color-accent);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
 }
 .btn:active:not(:disabled) {
-  transform: translateY(1px);
-}
-.btn:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px var(--color-accent-ring);
+  transform: translateY(0);
 }
 .btn:disabled {
   cursor: not-allowed;
   opacity: 0.5;
 }
+@media (prefers-reduced-motion: reduce) {
+  .btn:hover:not(:disabled) {
+    transform: none;
+  }
+}
 
 .btn-primary {
-  border-color: var(--color-accent);
-  background: linear-gradient(180deg, var(--blue-450), var(--blue-500));
+  border-color: var(--color-primary);
+  background: var(--color-primary);
   color: #fff;
-  box-shadow: 0 1px 2px rgba(16, 24, 55, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
 }
 .btn-primary:hover:not(:disabled) {
-  background: linear-gradient(180deg, var(--blue-500), var(--blue-550));
-  border-color: var(--blue-550);
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
   color: #fff;
 }
 
 .btn-ghost {
   border-color: transparent;
   background: none;
-  color: var(--color-text-muted);
-  padding: 0.4em 0.6em;
+  color: var(--color-slate);
+  padding: var(--space-1) var(--space-2);
 }
 .btn-ghost:hover:not(:disabled) {
-  background: var(--color-accent-soft);
+  background: var(--color-primary-soft);
   border-color: transparent;
-  color: var(--color-accent);
+  color: var(--color-primary);
 }
 
 .btn-sm {
-  padding: 0.4em 0.75em;
+  padding: var(--space-1) var(--space-3);
   font-size: 0.8em;
 }
 
@@ -151,21 +238,21 @@ button {
 button:not(.btn) {
   border-radius: var(--radius-sm);
   border: 1px solid var(--color-border);
-  padding: 0.5em 1em;
+  padding: var(--space-2) var(--space-4);
   font-size: 0.9em;
   font-weight: 600;
-  color: var(--color-text);
+  color: var(--color-navy);
   background-color: var(--color-surface);
   cursor: pointer;
 }
 button:not(.btn):hover:not(:disabled) {
-  border-color: var(--color-accent);
-  color: var(--color-accent);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
 }
 
 input,
 select {
   font-family: inherit;
   font-size: 0.88em;
-  color: var(--color-text);
+  color: var(--color-navy);
 }
