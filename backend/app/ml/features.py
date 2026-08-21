@@ -12,6 +12,7 @@ import pandas as pd
 
 from app.data.loader import load_patients
 from app.data.repository import (
+    LAB_LABELS,
     NUMERIC_LABS,
     active_medication_counts,
     ages,
@@ -81,6 +82,28 @@ def feature_names_for(target: str) -> list[str]:
     """Base features plus comorbidity flags for the *other* two target diseases."""
     others = [f"has_{t}" for t in TARGETS if t != target]
     return BASE_FEATURES + others
+
+
+_EXTRA_FEATURE_LABELS = {
+    "age": "Age",
+    "sex": "Sex",
+    "chronic_condition_count": "Chronic condition count",
+    "medication_count": "Medication count",
+    "has_diabetes": "Existing diabetes diagnosis",
+    "has_hypertension": "Existing hypertension diagnosis",
+    "has_heart_disease": "Existing heart disease diagnosis",
+}
+
+
+def feature_label(feature: str) -> str:
+    """Human-readable label for a raw feature key. Shared by the SHAP
+    condition-interaction analysis and cohort feature comparison so a
+    patient sees the same name for the same underlying feature everywhere."""
+    if feature in LAB_LABELS:
+        return LAB_LABELS[feature]
+    if feature in _EXTRA_FEATURE_LABELS:
+        return _EXTRA_FEATURE_LABELS[feature]
+    return feature.replace("_", " ").capitalize()
 
 
 def _has_any(descriptions: list[str], keywords: list[str]) -> bool:

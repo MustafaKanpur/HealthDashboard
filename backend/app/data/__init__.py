@@ -2,6 +2,7 @@ from .condition_categories import CATEGORY_NAMES
 from .loader import load_patients, load_conditions, load_observations, load_medications
 from .repository import (
     LAB_CODES,
+    LAB_LABELS,
     ages,
     filter_patient_ids,
     summary_for_id,
@@ -23,6 +24,7 @@ __all__ = [
     "recent_lab_trend",
     "ages",
     "LAB_CODES",
+    "LAB_LABELS",
     "PatientNotFoundError",
     "CATEGORY_NAMES",
 ]

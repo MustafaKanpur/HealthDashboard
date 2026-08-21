@@ -58,3 +58,44 @@ export function getRiskSummary({ riskTarget, ...filters } = {}) {
   const params = appendPanelFilterParams(new URLSearchParams({ risk_target: riskTarget }), filters)
   return request(`/api/risk-summary?${params.toString()}`)
 }
+
+export async function getConditionCorrelation() {
+  const data = await request('/api/analytics/condition-correlation')
+  return {
+    conditions: data.conditions,
+    matrix: data.matrix,
+    sufficientData: data.sufficient_data,
+    nPatients: data.n_patients,
+  }
+}
+
+export async function getConditionInteractions(patientId) {
+  const interactions = await request(`/api/patients/${patientId}/condition-interactions`)
+  return interactions.map((interaction) => ({
+    sharedFactor: interaction.shared_factor,
+    conditions: interaction.conditions,
+    contribution: interaction.contribution,
+  }))
+}
+
+export async function getPatientCohort(patientId, riskTarget) {
+  const data = await request(`/api/patients/${patientId}/cohort?risk_target=${riskTarget}`)
+  return {
+    sufficientData: data.sufficient_data,
+    cohortSize: data.cohort_size,
+    patientRiskScore: data.patient_risk_score,
+    cohortAverageRiskScore: data.cohort_average_risk_score,
+    cohortPercentile: data.cohort_percentile,
+    cohortRiskDistribution: data.cohort_risk_distribution,
+  }
+}
+
+export async function getCohortFeatureComparison(patientId) {
+  const comparisons = await request(`/api/patients/${patientId}/cohort/feature-comparison`)
+  return comparisons.map((comparison) => ({
+    feature: comparison.feature,
+    patientValue: comparison.patient_value,
+    cohortAverage: comparison.cohort_average,
+    percentDifference: comparison.percent_difference,
+  }))
+}

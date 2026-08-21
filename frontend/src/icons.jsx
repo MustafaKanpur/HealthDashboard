@@ -162,6 +162,16 @@ export function IconTrendingUp(props) {
   )
 }
 
+export function IconLink(props) {
+  return (
+    <Icon {...props}>
+      <path d="M9.5 14.5 14.5 9.5" />
+      <path d="M11 6.5 12.6 4.9a3.5 3.5 0 0 1 5 5L16 11.5" />
+      <path d="M13 17.5 11.4 19.1a3.5 3.5 0 0 1-5-5L8 12.5" />
+    </Icon>
+  )
+}
+
 export function IconPulse(props) {
   return (
     <Icon {...props}>

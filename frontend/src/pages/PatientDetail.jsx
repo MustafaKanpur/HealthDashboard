@@ -1,6 +1,14 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { getLabHistory, getPatient, getPatientSummary, getRiskExplanation } from '../api/client.js'
+import {
+  getCohortFeatureComparison,
+  getConditionInteractions,
+  getLabHistory,
+  getPatient,
+  getPatientCohort,
+  getPatientSummary,
+  getRiskExplanation,
+} from '../api/client.js'
 import {
   IconAlertOctagon,
   IconAlertTriangle,
@@ -9,16 +17,21 @@ import {
   IconChevronRight,
   IconClipboard,
   IconFlask,
+  IconLink,
   IconPill,
   IconSparkle,
   IconTarget,
   IconTrendingUp,
+  IconUsers,
 } from '../icons.jsx'
 import RiskGauge from '../components/charts/RiskGauge.jsx'
 import RiskRadarChart from '../components/charts/RiskRadarChart.jsx'
 import ShapFeatureBarChart from '../components/charts/ShapFeatureBarChart.jsx'
 import VitalsTrendChart from '../components/charts/VitalsTrendChart.jsx'
 import AnomalyHighlightChart from '../components/charts/AnomalyHighlightChart.jsx'
+import PatientConditionInteractionPanel from '../components/charts/PatientConditionInteractionPanel.jsx'
+import CohortComparisonCard from '../components/charts/CohortComparisonCard.jsx'
+import CohortFeatureDeltaTable from '../components/charts/CohortFeatureDeltaTable.jsx'
 
 const RISK_LABELS = {
   diabetes: 'Diabetes',
@@ -185,6 +198,70 @@ function LabTrends({ patientId, labs }) {
   )
 }
 
+function CohortComparison({ patientId, riskScores }) {
+  const [target, setTarget] = useState(Object.keys(riskScores)[0] || 'diabetes')
+  const [cohort, setCohort] = useState(null)
+  const [cohortError, setCohortError] = useState(null)
+  const [featureComparisons, setFeatureComparisons] = useState(null)
+  const [featureError, setFeatureError] = useState(null)
+
+  useEffect(() => {
+    let cancelled = false
+    setCohort(null)
+    setCohortError(null)
+    getPatientCohort(patientId, target)
+      .then((data) => {
+        if (!cancelled) setCohort(data)
+      })
+      .catch((err) => {
+        if (!cancelled) setCohortError(err.message)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [patientId, target])
+
+  useEffect(() => {
+    let cancelled = false
+    getCohortFeatureComparison(patientId)
+      .then((data) => {
+        if (!cancelled) setFeatureComparisons(data)
+      })
+      .catch((err) => {
+        if (!cancelled) setFeatureError(err.message)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [patientId])
+
+  return (
+    <div>
+      <select value={target} onChange={(event) => setTarget(event.target.value)} className="lab-trend-select">
+        {Object.keys(riskScores).map((key) => (
+          <option key={key} value={key}>
+            {RISK_LABELS[key] || key} risk
+          </option>
+        ))}
+      </select>
+
+      {cohortError && <div className="error-banner">{cohortError}</div>}
+      {cohort === null && !cohortError && <p className="empty-state">Loading cohort…</p>}
+      {cohort !== null && <CohortComparisonCard {...cohort} />}
+
+      <div className="chart-subhead">How this patient compares on individual features</div>
+      {featureError && <div className="error-banner">{featureError}</div>}
+      {featureComparisons === null && !featureError && <p className="empty-state">Loading…</p>}
+      {featureComparisons !== null && featureComparisons.length === 0 && (
+        <p className="empty-state">Not enough similar patients yet for a feature comparison.</p>
+      )}
+      {featureComparisons !== null && featureComparisons.length > 0 && (
+        <CohortFeatureDeltaTable comparisons={featureComparisons} />
+      )}
+    </div>
+  )
+}
+
 function PatientDetail() {
   const { patientId } = useParams()
   const [patient, setPatient] = useState(null)
@@ -199,6 +276,9 @@ function PatientDetail() {
   const [showInactiveConditions, setShowInactiveConditions] = useState(true)
   const [showActiveMedications, setShowActiveMedications] = useState(true)
   const [showInactiveMedications, setShowInactiveMedications] = useState(true)
+
+  const [interactions, setInteractions] = useState(null)
+  const [interactionsError, setInteractionsError] = useState(null)
 
   useEffect(() => {
     let cancelled = false
@@ -215,6 +295,22 @@ function PatientDetail() {
       })
       .finally(() => {
         if (!cancelled) setLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [patientId])
+
+  useEffect(() => {
+    let cancelled = false
+    setInteractions(null)
+    setInteractionsError(null)
+    getConditionInteractions(patientId)
+      .then((data) => {
+        if (!cancelled) setInteractions(data)
+      })
+      .catch((err) => {
+        if (!cancelled) setInteractionsError(err.message)
       })
     return () => {
       cancelled = true
@@ -277,6 +373,17 @@ function PatientDetail() {
 
       <div className="section">
         <h3>
+          <IconLink size={17} /> Condition Interactions
+        </h3>
+        {interactionsError && <div className="error-banner">{interactionsError}</div>}
+        {interactions === null && !interactionsError && <p className="empty-state">Loading…</p>}
+        {interactions !== null && (
+          <PatientConditionInteractionPanel patientId={patient.id} interactions={interactions} />
+        )}
+      </div>
+
+      <div className="section">
+        <h3>
           <IconFlask size={17} /> Recent Labs
         </h3>
         {patient.labs.length === 0 ? (
@@ -301,6 +408,13 @@ function PatientDetail() {
           <IconTrendingUp size={17} /> Lab Trends
         </h3>
         <LabTrends patientId={patient.id} labs={patient.labs} />
+      </div>
+
+      <div className="section">
+        <h3>
+          <IconUsers size={17} /> Cohort Comparison
+        </h3>
+        <CohortComparison patientId={patient.id} riskScores={patient.risk_scores} />
       </div>
 
       <div className="section">

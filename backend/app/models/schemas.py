@@ -91,6 +91,41 @@ class PanelRiskPoint(BaseModel):
     tier: str = Field(..., description="'low' | 'medium' | 'high'")
 
 
+class ConditionCorrelationResponse(BaseModel):
+    conditions: list[str] = Field(..., description="Target keys, in matrix row/column order")
+    matrix: list[list[float]] = Field(
+        default_factory=list, description="Spearman correlation; matrix[i][j] = corr(conditions[i], conditions[j])"
+    )
+    sufficient_data: bool = Field(..., description="False when the scored panel is too small for a meaningful matrix")
+    n_patients: int = Field(..., description="Size of the scored panel this was computed over")
+
+
+class ConditionInteraction(BaseModel):
+    shared_factor: str = Field(..., description="Human-readable feature name, e.g. 'Glucose'")
+    conditions: list[str] = Field(..., description="Target keys this factor is a top contributor to for this patient")
+    contribution: float = Field(..., description="Summed SHAP contribution of this factor across those conditions")
+
+
+class CohortComparisonResponse(BaseModel):
+    sufficient_data: bool = Field(..., description="False when this patient's cluster has too few members")
+    cohort_size: int = Field(..., description="Number of patients in this patient's cluster")
+    patient_risk_score: float = Field(..., ge=0, le=1)
+    cohort_average_risk_score: float = Field(..., ge=0, le=1)
+    cohort_percentile: float = Field(
+        ..., ge=0, le=100, description="Share of the cohort this patient's risk score is higher than"
+    )
+    cohort_risk_distribution: list[float] = Field(
+        default_factory=list, description="Every cohort member's risk score (0-1), for the distribution chart"
+    )
+
+
+class CohortFeatureComparison(BaseModel):
+    feature: str
+    patient_value: float
+    cohort_average: float
+    percent_difference: float = Field(..., description="(patient - cohort average) / |cohort average| * 100")
+
+
 class SummaryRequest(BaseModel):
     question: Optional[str] = Field(
         default=None, description="Optional free-text question from the clinician"

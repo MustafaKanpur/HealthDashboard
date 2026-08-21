@@ -44,3 +44,24 @@ export const TIER_COLOR = {
 
 export const SHAP_UP_COLOR = CHART_COLORS.critical // pushes predicted risk up
 export const SHAP_DOWN_COLOR = CHART_COLORS.accent // pushes predicted risk down
+
+/** Display names for the backend's raw target keys (diabetes/hypertension/heart_disease). */
+export const CONDITION_LABELS = {
+  diabetes: 'Diabetes',
+  hypertension: 'Hypertension',
+  heart_disease: 'Heart Disease',
+}
+
+/**
+ * Diverging correlation color: positive -> primary blue, negative -> muted
+ * slate (not red/green — those are reserved for risk tiers), intensity
+ * scaled by |r|, blended toward white at r=0. No new hues introduced beyond
+ * the app's existing accent/slate tokens.
+ */
+export function correlationColor(r) {
+  const clamped = Math.max(-1, Math.min(1, r))
+  const intensity = Math.abs(clamped)
+  const [red, green, blue] = clamped >= 0 ? [26, 86, 219] : [75, 90, 114] // accent / slate
+  const mix = (channel) => Math.round(255 + (channel - 255) * intensity)
+  return `rgb(${mix(red)}, ${mix(green)}, ${mix(blue)})`
+}

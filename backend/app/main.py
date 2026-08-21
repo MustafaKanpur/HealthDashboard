@@ -25,8 +25,22 @@ from app.data import (
     recent_lab_trend,
     summary_for_id,
 )
-from app.ml import SEVERITY_ORDER, TARGETS, explain_patient_risk, predict_all_risks, predict_all_risks_bulk
+from app.ml import (
+    SEVERITY_ORDER,
+    TARGETS,
+    cohort_comparison,
+    cohort_feature_comparison,
+    condition_correlation_matrix,
+    explain_patient_risk,
+    patient_condition_interactions,
+    predict_all_risks,
+    predict_all_risks_bulk,
+)
 from app.models import (
+    CohortComparisonResponse,
+    CohortFeatureComparison,
+    ConditionCorrelationResponse,
+    ConditionInteraction,
     InsightResponse,
     LabHistoryPoint,
     PanelRiskPoint,
@@ -156,6 +170,46 @@ def risk_summary(
             )
         )
     return points
+
+
+@app.get("/api/analytics/condition-correlation", response_model=ConditionCorrelationResponse)
+def condition_correlation():
+    return condition_correlation_matrix()
+
+
+@app.get("/api/patients/{patient_id}/condition-interactions", response_model=list[ConditionInteraction])
+def condition_interactions(patient_id: str):
+    try:
+        return patient_condition_interactions(patient_id)
+    except PatientNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
+@app.get("/api/patients/{patient_id}/cohort", response_model=CohortComparisonResponse)
+def patient_cohort(
+    patient_id: str,
+    risk_target: str = Query(..., description="'diabetes' | 'hypertension' | 'heart_disease'"),
+):
+    if risk_target not in TARGETS:
+        raise HTTPException(status_code=400, detail=f"risk_target must be one of {TARGETS}")
+    try:
+        return cohort_comparison(patient_id, risk_target)
+    except PatientNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
+@app.get("/api/patients/{patient_id}/cohort/feature-comparison", response_model=list[CohortFeatureComparison])
+def patient_cohort_feature_comparison(patient_id: str):
+    try:
+        return cohort_feature_comparison(patient_id)
+    except PatientNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
 
 
 @app.get("/api/patients/{patient_id}", response_model=PatientDetailResponse)

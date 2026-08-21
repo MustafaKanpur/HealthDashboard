@@ -3,7 +3,8 @@ import { Link, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import PatientList from './pages/PatientList.jsx'
 import PatientDetail from './pages/PatientDetail.jsx'
 import ComparePatients from './pages/ComparePatients.jsx'
-import { IconPulse, IconUsers, IconX } from './icons.jsx'
+import CohortAnalytics from './pages/CohortAnalytics.jsx'
+import { IconPulse, IconTarget, IconUsers, IconX } from './icons.jsx'
 import './App.css'
 
 function App() {
@@ -19,7 +20,9 @@ function App() {
     navigate(`/compare?ids=${selectedIds.join(',')}`)
   }
 
-  const patientsActive = location.pathname === '/' || location.pathname.startsWith('/patients')
+  const patientsActive =
+    location.pathname === '/' || location.pathname.startsWith('/patients') || location.pathname === '/compare'
+  const analyticsActive = location.pathname.startsWith('/analytics')
 
   return (
     <div className="app-shell">
@@ -35,6 +38,10 @@ function App() {
             <IconUsers size={16} />
             Patients
           </Link>
+          <Link to="/analytics" className={`nav-item ${analyticsActive ? 'active' : ''}`}>
+            <IconTarget size={16} />
+            Analytics
+          </Link>
         </nav>
       </aside>
       <div className="app-main">
@@ -46,6 +53,7 @@ function App() {
             />
             <Route path="/patients/:patientId" element={<PatientDetail />} />
             <Route path="/compare" element={<ComparePatients />} />
+            <Route path="/analytics" element={<CohortAnalytics />} />
           </Routes>
         </main>
       </div>
