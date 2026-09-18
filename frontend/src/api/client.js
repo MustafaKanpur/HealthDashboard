@@ -59,6 +59,11 @@ export function getRiskSummary({ riskTarget, ...filters } = {}) {
   return request(`/api/risk-summary?${params.toString()}`)
 }
 
+export async function getPanelSummary() {
+  const data = await request('/api/analytics/panel-summary')
+  return { total: data.total_patients, high: data.high_risk_counts, moderate: data.moderate_risk_counts }
+}
+
 export async function getConditionCorrelation() {
   const data = await request('/api/analytics/condition-correlation')
   return {

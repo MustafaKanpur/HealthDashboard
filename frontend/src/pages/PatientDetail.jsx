@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import {
   getCohortFeatureComparison,
   getConditionInteractions,
@@ -17,9 +17,12 @@ import {
   IconChevronRight,
   IconClipboard,
   IconFlask,
+  IconGrid,
+  IconLightbulb,
   IconLink,
   IconPill,
   IconSparkle,
+  IconStethoscope,
   IconTarget,
   IconTrendingUp,
   IconUsers,
@@ -32,12 +35,12 @@ import AnomalyHighlightChart from '../components/charts/AnomalyHighlightChart.js
 import PatientConditionInteractionPanel from '../components/charts/PatientConditionInteractionPanel.jsx'
 import CohortComparisonCard from '../components/charts/CohortComparisonCard.jsx'
 import CohortFeatureDeltaTable from '../components/charts/CohortFeatureDeltaTable.jsx'
-
-const RISK_LABELS = {
-  diabetes: 'Diabetes',
-  hypertension: 'Hypertension',
-  heart_disease: 'Heart Disease',
-}
+import { CONDITION_LABELS } from '../components/charts/chartTheme.js'
+import Avatar from '../components/ui/Avatar.jsx'
+import Card from '../components/ui/Card.jsx'
+import Tabs from '../components/ui/Tabs.jsx'
+import Skeleton, { SkeletonText } from '../components/ui/Skeleton.jsx'
+import CountUp from '../components/ui/CountUp.jsx'
 
 const RISK_ICON = {
   low: IconCheckCircle,
@@ -45,7 +48,15 @@ const RISK_ICON = {
   high: IconAlertOctagon,
 }
 
-function RiskCard({ conditionKey, risk, patientId }) {
+const SEVERITY = { low: 0, moderate: 1, high: 2 }
+
+const TABS = [
+  { id: 'overview', label: 'Overview', icon: IconGrid },
+  { id: 'clinical', label: 'Clinical record', icon: IconStethoscope },
+  { id: 'insights', label: 'Insights', icon: IconLightbulb },
+]
+
+function RiskCard({ conditionKey, risk, patientId, index }) {
   const [showWhy, setShowWhy] = useState(false)
   const [shapValues, setShapValues] = useState(null)
   const [shapLoading, setShapLoading] = useState(false)
@@ -67,36 +78,41 @@ function RiskCard({ conditionKey, risk, patientId }) {
   }
 
   return (
-    <div className={`risk-card ${risk.label}`}>
-      <div className="risk-name">{RISK_LABELS[conditionKey] || conditionKey}</div>
-      <RiskGauge score={risk.score * 100} />
-      <div className="risk-label">
-        <StatusIcon size={13} strokeWidth={2.2} />
-        {risk.label} risk
+    <div className={`risk-card ${risk.label} reveal`} style={{ '--i': index }}>
+      <div className="risk-card-top">
+        <div className="risk-name">{CONDITION_LABELS[conditionKey] || conditionKey}</div>
+        <div className="risk-label">
+          <StatusIcon size={13} strokeWidth={2.2} />
+          {risk.label}
+        </div>
       </div>
-      {isElevated && (
+      <RiskGauge score={risk.score * 100} />
+      {isElevated ? (
         <>
-          <button className={`btn-ghost why-toggle ${showWhy ? 'open' : ''}`} onClick={handleToggleWhy}>
-            <IconChevronRight size={13} /> Why?
+          <button className={`why-toggle ${showWhy ? 'open' : ''}`} onClick={handleToggleWhy} aria-expanded={showWhy}>
+            Why this score
+            <IconChevronRight size={14} />
           </button>
-          {showWhy && (
-            <div className="why-panel">
+          <div className={`why-panel ${showWhy ? 'is-open' : ''}`} inert={showWhy ? undefined : ''}>
+            <div className="why-panel-inner">
               <ul className="why-list">
                 {risk.factors.length > 0 ? (
-                  risk.factors.map((factor, index) => <li key={index}>{factor}</li>)
+                  risk.factors.map((factor, factorIndex) => <li key={factorIndex}>{factor}</li>)
                 ) : (
                   <li>Multiple mild factors combine to elevate risk; no single dominant factor identified.</li>
                 )}
               </ul>
               <div className="shap-section">
                 <div className="chart-subhead">Model feature contributions (SHAP)</div>
-                {shapLoading && <p className="empty-state">Loading…</p>}
+                {shapLoading && <SkeletonText lines={4} />}
                 {shapError && <div className="error-banner">{shapError}</div>}
                 {shapValues && <ShapFeatureBarChart shapValues={shapValues} />}
               </div>
             </div>
-          )}
+          </div>
         </>
+      ) : (
+        <p className="risk-calm-note">No elevated risk factors flagged.</p>
       )}
     </div>
   )
@@ -114,27 +130,50 @@ function groupByCategory(conditions) {
 function ConditionGroup({ category, conditions }) {
   const [open, setOpen] = useState(true)
   return (
-    <div className="condition-group">
-      <button className={`condition-group-toggle ${open ? 'open' : ''}`} onClick={() => setOpen(!open)}>
-        <IconChevronRight size={13} />
-        {category} ({conditions.length})
+    <div className={`condition-group ${open ? 'is-open' : ''}`}>
+      <button className="condition-group-toggle" onClick={() => setOpen(!open)} aria-expanded={open}>
+        <IconChevronRight size={14} />
+        {category}
+        <span className="count-pill mono">{conditions.length}</span>
       </button>
-      {open && (
-        <ul className="entry-list">
-          {conditions.map((condition, index) => (
-            <li key={index}>
-              <span>{condition.description}</span>
-              <span className="entry-dates">
-                {condition.active ? (
-                  <span className="badge-active">active since {condition.start}</span>
-                ) : (
-                  `${condition.start} – ${condition.stop}`
-                )}
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
+      <div className="condition-group-body" inert={open ? undefined : ''}>
+        <div className="condition-group-inner">
+          <ul className="entry-list">
+            {conditions.map((condition, index) => (
+              <li key={index}>
+                <span>{condition.description}</span>
+                <span className="entry-dates">
+                  {condition.active ? (
+                    <span className="badge-active">Active since {condition.start}</span>
+                  ) : (
+                    <span className="mono">
+                      {condition.start} – {condition.stop}
+                    </span>
+                  )}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ActiveToggle({ showActive, showInactive, onToggleActive, onToggleInactive }) {
+  return (
+    <div className="toggle-group" role="group" aria-label="Show active or inactive entries">
+      <button type="button" className={`toggle-chip ${showActive ? 'on' : ''}`} aria-pressed={showActive} onClick={onToggleActive}>
+        Active
+      </button>
+      <button
+        type="button"
+        className={`toggle-chip ${showInactive ? 'on' : ''}`}
+        aria-pressed={showInactive}
+        onClick={onToggleInactive}
+      >
+        Inactive
+      </button>
     </div>
   )
 }
@@ -170,29 +209,39 @@ function LabTrends({ patientId, labs }) {
   }
 
   const selectedLabel = labs.find((lab) => lab.key === labKey)?.label || labKey
-  const handleLabChange = (event) => {
-    setHistory(null)
-    setLabKey(event.target.value)
-  }
 
   return (
     <div>
-      <select value={labKey} onChange={handleLabChange} className="lab-trend-select">
+      <div className="segmented segmented--wrap" role="radiogroup" aria-label="Lab to trend">
         {labs.map((lab) => (
-          <option key={lab.key} value={lab.key}>
+          <button
+            key={lab.key}
+            type="button"
+            role="radio"
+            aria-checked={labKey === lab.key}
+            className={`segmented-option ${labKey === lab.key ? 'selected' : ''}`}
+            onClick={() => {
+              setHistory(null)
+              setLabKey(lab.key)
+            }}
+          >
             {lab.label}
-          </option>
+          </button>
         ))}
-      </select>
-      {loading && <p className="empty-state">Loading trend…</p>}
+      </div>
+      {loading && !history && <Skeleton height={240} radius={12} style={{ marginTop: 16 }} />}
       {error && <div className="error-banner">{error}</div>}
       {history && (
-        <>
-          <div className="chart-subhead">{selectedLabel} over time</div>
-          <VitalsTrendChart data={history.map(({ date, value }) => ({ date, value }))} metricLabel={selectedLabel} />
-          <div className="chart-subhead">Anomaly detection</div>
-          <AnomalyHighlightChart data={history} />
-        </>
+        <div className="lab-trend-charts">
+          <div>
+            <div className="chart-subhead">{selectedLabel} over time</div>
+            <VitalsTrendChart data={history.map(({ date, value }) => ({ date, value }))} metricLabel={selectedLabel} />
+          </div>
+          <div>
+            <div className="chart-subhead">Anomaly detection</div>
+            <AnomalyHighlightChart data={history} />
+          </div>
+        </div>
       )}
     </div>
   )
@@ -236,34 +285,72 @@ function CohortComparison({ patientId, riskScores }) {
   }, [patientId])
 
   return (
+    <div className="cohort-layout">
+      <div>
+        <div className="segmented" role="radiogroup" aria-label="Risk to compare">
+          {Object.keys(riskScores).map((key) => (
+            <button
+              key={key}
+              type="button"
+              role="radio"
+              aria-checked={target === key}
+              className={`segmented-option ${target === key ? 'selected' : ''}`}
+              onClick={() => setTarget(key)}
+            >
+              {CONDITION_LABELS[key] || key}
+            </button>
+          ))}
+        </div>
+        <div className="cohort-card-slot">
+          {cohortError && <div className="error-banner">{cohortError}</div>}
+          {cohort === null && !cohortError && <SkeletonText lines={5} />}
+          {cohort !== null && <CohortComparisonCard key={target} {...cohort} />}
+        </div>
+      </div>
+      <div>
+        <div className="chart-subhead">How this patient differs from similar patients</div>
+        {featureError && <div className="error-banner">{featureError}</div>}
+        {featureComparisons === null && !featureError && <SkeletonText lines={6} />}
+        {featureComparisons !== null && featureComparisons.length === 0 && (
+          <p className="empty-state">Not enough similar patients yet for a feature comparison.</p>
+        )}
+        {featureComparisons !== null && featureComparisons.length > 0 && (
+          <CohortFeatureDeltaTable comparisons={featureComparisons} />
+        )}
+      </div>
+    </div>
+  )
+}
+
+function DetailSkeleton() {
+  return (
     <div>
-      <select value={target} onChange={(event) => setTarget(event.target.value)} className="lab-trend-select">
-        {Object.keys(riskScores).map((key) => (
-          <option key={key} value={key}>
-            {RISK_LABELS[key] || key} risk
-          </option>
+      <Skeleton width={150} height={14} style={{ marginBottom: 24 }} />
+      <div className="card patient-hero">
+        <Skeleton width={84} height={84} radius={999} />
+        <div style={{ flex: 1 }}>
+          <Skeleton width="40%" height={28} />
+          <Skeleton width="60%" height={14} style={{ marginTop: 12 }} />
+        </div>
+      </div>
+      <div className="risk-cards">
+        {[0, 1, 2].map((index) => (
+          <div key={index} className="risk-card">
+            <Skeleton width="50%" height={12} />
+            <Skeleton height={120} radius={12} style={{ marginTop: 16 }} />
+          </div>
         ))}
-      </select>
-
-      {cohortError && <div className="error-banner">{cohortError}</div>}
-      {cohort === null && !cohortError && <p className="empty-state">Loading cohort…</p>}
-      {cohort !== null && <CohortComparisonCard {...cohort} />}
-
-      <div className="chart-subhead">How this patient compares on individual features</div>
-      {featureError && <div className="error-banner">{featureError}</div>}
-      {featureComparisons === null && !featureError && <p className="empty-state">Loading…</p>}
-      {featureComparisons !== null && featureComparisons.length === 0 && (
-        <p className="empty-state">Not enough similar patients yet for a feature comparison.</p>
-      )}
-      {featureComparisons !== null && featureComparisons.length > 0 && (
-        <CohortFeatureDeltaTable comparisons={featureComparisons} />
-      )}
+      </div>
     </div>
   )
 }
 
 function PatientDetail() {
   const { patientId } = useParams()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const tab = TABS.some((t) => t.id === searchParams.get('tab')) ? searchParams.get('tab') : 'overview'
+  const setTab = (id) => setSearchParams(id === 'overview' ? {} : { tab: id }, { replace: true })
+
   const [patient, setPatient] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -326,200 +413,278 @@ function PatientDetail() {
       .finally(() => setSummaryLoading(false))
   }
 
-  if (loading) return <p>Loading patient...</p>
+  if (loading) return <DetailSkeleton />
   if (error) return <div className="error-banner">{error}</div>
   if (!patient) return null
 
-  const radarConditions = Object.entries(patient.risk_scores).map(([key, risk]) => ({
-    name: RISK_LABELS[key] || key,
+  const riskEntries = Object.entries(patient.risk_scores)
+  const [topKey, topRisk] = riskEntries.reduce(
+    (best, entry) =>
+      SEVERITY[entry[1].label] > SEVERITY[best[1].label] ||
+      (SEVERITY[entry[1].label] === SEVERITY[best[1].label] && entry[1].score > best[1].score)
+        ? entry
+        : best,
+    riskEntries[0]
+  )
+  const TopIcon = RISK_ICON[topRisk.label]
+
+  const radarConditions = riskEntries.map(([key, risk]) => ({
+    name: CONDITION_LABELS[key] || key,
     riskScore: risk.score * 100,
   }))
 
   const filteredConditions = patient.conditions.filter(
     (condition) => (condition.active && showActiveConditions) || (!condition.active && showInactiveConditions)
   )
-
   const filteredMedications = patient.medications.filter(
     (medication) => (medication.active && showActiveMedications) || (!medication.active && showInactiveMedications)
   )
+  const activeConditionCount = patient.conditions.filter((condition) => condition.active).length
+  const activeMedicationCount = new Set(
+    patient.medications.filter((medication) => medication.active).map((medication) => medication.description)
+  ).size
 
   return (
     <div>
-      <Link className="back-link" to="/">
-        <IconArrowLeft size={15} /> Back to patient search
+      <Link className="back-link reveal" to="/">
+        <IconArrowLeft size={15} /> Patient panel
       </Link>
 
-      <div className="patient-header">
-        <h2>{patient.name}</h2>
-        <div className="meta">
-          {patient.age} yrs · {patient.sex} · {patient.race || 'unknown race'} ·{' '}
-          {patient.city && patient.state ? `${patient.city}, ${patient.state}` : 'location unknown'}
-          {patient.deceased ? ' · deceased' : ''}
+      <section className="card patient-hero reveal" style={{ '--i': 1 }}>
+        <div className={`hero-avatar tier-${topRisk.label}`}>
+          <span className="hero-avatar-ring" aria-hidden="true" />
+          <Avatar name={patient.name} size={76} />
         </div>
+        <div className="hero-identity">
+          <div className="eyebrow">Patient chart</div>
+          <h1 className="hero-name">{patient.name}</h1>
+          <div className="hero-chips">
+            <span className="chip">
+              <span className="mono">{patient.age}</span> years
+            </span>
+            <span className="chip">{patient.sex === 'M' ? 'Male' : patient.sex === 'F' ? 'Female' : patient.sex}</span>
+            {patient.race && <span className="chip chip--capitalize">{patient.race}</span>}
+            <span className="chip">
+              {patient.city && patient.state ? `${patient.city}, ${patient.state}` : 'Location unknown'}
+            </span>
+            {patient.deceased && <span className="chip chip--muted">Deceased</span>}
+          </div>
+        </div>
+        <dl className="hero-stats">
+          <div className="hero-stat">
+            <dt>Highest risk</dt>
+            <dd>
+              <span className={`tier-badge ${topRisk.label}`}>
+                <TopIcon size={13} strokeWidth={2.2} />
+                {CONDITION_LABELS[topKey]}
+              </span>
+            </dd>
+          </div>
+          <div className="hero-stat">
+            <dt>Active conditions</dt>
+            <dd>
+              <CountUp value={activeConditionCount} className="mono" />
+            </dd>
+          </div>
+          <div className="hero-stat">
+            <dt>Active medications</dt>
+            <dd>
+              <CountUp value={activeMedicationCount} className="mono" />
+            </dd>
+          </div>
+        </dl>
+      </section>
+
+      <div className="tabs-row reveal" style={{ '--i': 2 }}>
+        <Tabs tabs={TABS} value={tab} onChange={setTab} idPrefix="patient" />
       </div>
 
-      <div className="risk-cards">
-        {Object.entries(patient.risk_scores).map(([key, risk]) => (
-          <RiskCard key={key} conditionKey={key} risk={risk} patientId={patient.id} />
-        ))}
-      </div>
-
-      <div className="section">
-        <h3>
-          <IconTarget size={17} /> Condition Risk Overview
-        </h3>
-        <RiskRadarChart conditions={radarConditions} />
-      </div>
-
-      <div className="section">
-        <h3>
-          <IconLink size={17} /> Condition Interactions
-        </h3>
-        {interactionsError && <div className="error-banner">{interactionsError}</div>}
-        {interactions === null && !interactionsError && <p className="empty-state">Loading…</p>}
-        {interactions !== null && (
-          <PatientConditionInteractionPanel patientId={patient.id} interactions={interactions} />
+      <div
+        key={tab}
+        className="tab-panel"
+        role="tabpanel"
+        id={`patient-panel-${tab}`}
+        aria-labelledby={`patient-${tab}`}
+      >
+        {tab === 'overview' && (
+          <>
+            <div className="risk-cards">
+              {riskEntries.map(([key, risk], index) => (
+                <RiskCard key={key} conditionKey={key} risk={risk} patientId={patient.id} index={index} />
+              ))}
+            </div>
+            <div className="grid-2">
+              <Card icon={IconTarget} title="Risk profile" hint="All three conditions at a glance" index={3}>
+                <RiskRadarChart conditions={radarConditions} />
+              </Card>
+              <Card
+                icon={IconLink}
+                title="Compounding factors"
+                hint="Features driving more than one elevated condition"
+                index={4}
+              >
+                {interactionsError && <div className="error-banner">{interactionsError}</div>}
+                {interactions === null && !interactionsError && <SkeletonText lines={4} />}
+                {interactions !== null && (
+                  <PatientConditionInteractionPanel patientId={patient.id} interactions={interactions} />
+                )}
+              </Card>
+            </div>
+          </>
         )}
-      </div>
 
-      <div className="section">
-        <h3>
-          <IconFlask size={17} /> Recent Labs
-        </h3>
-        {patient.labs.length === 0 ? (
-          <p className="empty-state">No lab values on file.</p>
-        ) : (
-          <div className="lab-grid">
-            {patient.labs.map((lab) => (
-              <div className="lab-item" key={lab.key}>
-                <div className="lab-label">{lab.label}</div>
-                <div className="lab-value">
-                  {lab.value} {lab.unit || ''}
+        {tab === 'clinical' && (
+          <>
+            <Card icon={IconFlask} title="Recent labs" hint="Most recent value of each measured lab" index={0}>
+              {patient.labs.length === 0 ? (
+                <p className="empty-state">No lab values on file.</p>
+              ) : (
+                <div className="lab-grid">
+                  {patient.labs.map((lab, index) => (
+                    <div className="lab-item reveal" key={lab.key} style={{ '--i': index + 1 }}>
+                      <div className="lab-label">{lab.label}</div>
+                      <div className="lab-value">
+                        {lab.value}
+                        <span className="lab-unit">{lab.unit || ''}</span>
+                      </div>
+                      <div className="lab-date">{lab.observed_on}</div>
+                    </div>
+                  ))}
                 </div>
-                <div className="lab-date">as of {lab.observed_on}</div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+              )}
+            </Card>
 
-      <div className="section">
-        <h3>
-          <IconTrendingUp size={17} /> Lab Trends
-        </h3>
-        <LabTrends patientId={patient.id} labs={patient.labs} />
-      </div>
+            <Card icon={IconTrendingUp} title="Lab trends" hint="History and statistical outliers for one lab" index={1}>
+              <LabTrends patientId={patient.id} labs={patient.labs} />
+            </Card>
 
-      <div className="section">
-        <h3>
-          <IconUsers size={17} /> Cohort Comparison
-        </h3>
-        <CohortComparison patientId={patient.id} riskScores={patient.risk_scores} />
-      </div>
+            <div className="grid-2">
+              <Card
+                icon={IconClipboard}
+                title="Condition history"
+                hint={`${filteredConditions.length} of ${patient.conditions.length} shown`}
+                index={2}
+                actions={
+                  patient.conditions.length > 0 && (
+                    <ActiveToggle
+                      showActive={showActiveConditions}
+                      showInactive={showInactiveConditions}
+                      onToggleActive={() => setShowActiveConditions(!showActiveConditions)}
+                      onToggleInactive={() => setShowInactiveConditions(!showInactiveConditions)}
+                    />
+                  )
+                }
+              >
+                {patient.conditions.length === 0 ? (
+                  <p className="empty-state">No conditions on file.</p>
+                ) : filteredConditions.length === 0 ? (
+                  <p className="empty-state">No conditions match the current filters.</p>
+                ) : (
+                  groupByCategory(filteredConditions).map(([category, conditions]) => (
+                    <ConditionGroup key={category} category={category} conditions={conditions} />
+                  ))
+                )}
+              </Card>
 
-      <div className="section">
-        <h3>
-          <IconSparkle size={17} /> AI Summary
-        </h3>
-        {!summary && (
-          <button className="btn btn-primary" onClick={handleGenerateSummary} disabled={summaryLoading}>
-            <IconSparkle size={15} />
-            {summaryLoading ? 'Generating…' : 'Generate AI Summary'}
-          </button>
+              <Card
+                icon={IconPill}
+                title="Medications"
+                hint={`${filteredMedications.length} of ${patient.medications.length} shown`}
+                index={3}
+                actions={
+                  patient.medications.length > 0 && (
+                    <ActiveToggle
+                      showActive={showActiveMedications}
+                      showInactive={showInactiveMedications}
+                      onToggleActive={() => setShowActiveMedications(!showActiveMedications)}
+                      onToggleInactive={() => setShowInactiveMedications(!showInactiveMedications)}
+                    />
+                  )
+                }
+              >
+                {patient.medications.length === 0 ? (
+                  <p className="empty-state">No medications on file.</p>
+                ) : filteredMedications.length === 0 ? (
+                  <p className="empty-state">No medications match the current filters.</p>
+                ) : (
+                  <ul className="entry-list entry-list--flush">
+                    {filteredMedications.map((medication, index) => (
+                      <li key={index}>
+                        <span>{medication.description}</span>
+                        <span className="entry-dates">
+                          {medication.active ? (
+                            <span className="badge-active">Active since {medication.start}</span>
+                          ) : (
+                            <span className="mono">
+                              {medication.start} – {medication.stop}
+                            </span>
+                          )}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </Card>
+            </div>
+          </>
         )}
-        {summaryError && <div className="error-banner">{summaryError}</div>}
-        {summary && (
-          <div className="summary-box">
-            <p>{summary.summary}</p>
-            {summary.recommendations.length > 0 && (
-              <ul>
-                {summary.recommendations.map((rec, index) => (
-                  <li key={index}>{rec}</li>
-                ))}
-              </ul>
-            )}
-          </div>
-        )}
-      </div>
 
-      <div className="section">
-        <h3>
-          <IconClipboard size={17} /> Condition History ({filteredConditions.length})
-        </h3>
-        {patient.conditions.length > 0 && (
-          <div className="condition-filters">
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={showActiveConditions}
-                onChange={() => setShowActiveConditions(!showActiveConditions)}
-              />
-              Active
-            </label>
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={showInactiveConditions}
-                onChange={() => setShowInactiveConditions(!showInactiveConditions)}
-              />
-              Inactive
-            </label>
-          </div>
-        )}
-        {patient.conditions.length === 0 ? (
-          <p className="empty-state">No conditions on file.</p>
-        ) : filteredConditions.length === 0 ? (
-          <p className="empty-state">No conditions match the current filters.</p>
-        ) : (
-          groupByCategory(filteredConditions).map(([category, conditions]) => (
-            <ConditionGroup key={category} category={category} conditions={conditions} />
-          ))
-        )}
-      </div>
+        {tab === 'insights' && (
+          <>
+            <Card
+              icon={IconUsers}
+              title="Cohort comparison"
+              hint="How this patient's risk compares to clinically similar patients (KMeans cohort)"
+              index={0}
+            >
+              <CohortComparison patientId={patient.id} riskScores={patient.risk_scores} />
+            </Card>
 
-      <div className="section">
-        <h3>
-          <IconPill size={17} /> Medications ({filteredMedications.length})
-        </h3>
-        {patient.medications.length > 0 && (
-          <div className="condition-filters">
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={showActiveMedications}
-                onChange={() => setShowActiveMedications(!showActiveMedications)}
-              />
-              Active
-            </label>
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={showInactiveMedications}
-                onChange={() => setShowInactiveMedications(!showInactiveMedications)}
-              />
-              Inactive
-            </label>
-          </div>
-        )}
-        {patient.medications.length === 0 ? (
-          <p className="empty-state">No medications on file.</p>
-        ) : filteredMedications.length === 0 ? (
-          <p className="empty-state">No medications match the current filters.</p>
-        ) : (
-          <ul className="entry-list">
-            {filteredMedications.map((medication, index) => (
-              <li key={index}>
-                <span>{medication.description}</span>
-                <span className="entry-dates">
-                  {medication.active ? (
-                    <span className="badge-active">active since {medication.start}</span>
-                  ) : (
-                    `${medication.start} – ${medication.stop}`
+            <Card
+              icon={IconSparkle}
+              title="AI chart summary"
+              hint="A plain-language pre-visit summary generated by Claude"
+              index={1}
+              className="ai-card"
+            >
+              {!summary && !summaryLoading && (
+                <div className="ai-cta">
+                  <p>Condense this chart — conditions, labs, medications and risk scores — into a two-minute read.</p>
+                  <button className="btn btn-primary" onClick={handleGenerateSummary}>
+                    <IconSparkle size={15} />
+                    Generate summary
+                  </button>
+                </div>
+              )}
+              {summaryLoading && (
+                <div className="ai-generating">
+                  <span className="ai-orb" aria-hidden="true" />
+                  <div style={{ flex: 1 }}>
+                    <div className="ai-generating-label">Reading the chart…</div>
+                    <SkeletonText lines={4} />
+                  </div>
+                </div>
+              )}
+              {summaryError && <div className="error-banner">{summaryError}</div>}
+              {summary && (
+                <div className="summary-box reveal">
+                  <p>{summary.summary}</p>
+                  {summary.recommendations.length > 0 && (
+                    <>
+                      <div className="chart-subhead">Suggested considerations</div>
+                      <ul>
+                        {summary.recommendations.map((rec, index) => (
+                          <li key={index} className="reveal" style={{ '--i': index }}>
+                            {rec}
+                          </li>
+                        ))}
+                      </ul>
+                    </>
                   )}
-                </span>
-              </li>
-            ))}
-          </ul>
+                </div>
+              )}
+            </Card>
+          </>
         )}
       </div>
     </div>

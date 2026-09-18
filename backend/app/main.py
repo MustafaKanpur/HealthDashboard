@@ -31,6 +31,7 @@ from app.ml import (
     cohort_comparison,
     cohort_feature_comparison,
     condition_correlation_matrix,
+    panel_summary,
     explain_patient_risk,
     patient_condition_interactions,
     predict_all_risks,
@@ -40,6 +41,7 @@ from app.models import (
     CohortComparisonResponse,
     CohortFeatureComparison,
     ConditionCorrelationResponse,
+    PanelSummaryResponse,
     ConditionInteraction,
     InsightResponse,
     LabHistoryPoint,
@@ -170,6 +172,11 @@ def risk_summary(
             )
         )
     return points
+
+
+@app.get("/api/analytics/panel-summary", response_model=PanelSummaryResponse)
+def analytics_panel_summary():
+    return panel_summary()
 
 
 @app.get("/api/analytics/condition-correlation", response_model=ConditionCorrelationResponse)

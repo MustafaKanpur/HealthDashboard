@@ -100,6 +100,12 @@ class ConditionCorrelationResponse(BaseModel):
     n_patients: int = Field(..., description="Size of the scored panel this was computed over")
 
 
+class PanelSummaryResponse(BaseModel):
+    total_patients: int
+    high_risk_counts: dict[str, int] = Field(..., description="Patients whose risk label is 'high', per target")
+    moderate_risk_counts: dict[str, int] = Field(..., description="Patients whose risk label is 'moderate', per target")
+
+
 class ConditionInteraction(BaseModel):
     shared_factor: str = Field(..., description="Human-readable feature name, e.g. 'Glucose'")
     conditions: list[str] = Field(..., description="Target keys this factor is a top contributor to for this patient")

@@ -21,7 +21,7 @@ from app.data import PatientNotFoundError
 from app.ml.explain import explain_patient_risk
 from app.ml.features import TARGETS, feature_label
 from app.ml.infer import predict_all_risks_bulk
-from app.models.schemas import ConditionCorrelationResponse, ConditionInteraction
+from app.models.schemas import ConditionCorrelationResponse, ConditionInteraction, PanelSummaryResponse
 
 MIN_PATIENTS_FOR_CORRELATION = 30
 
@@ -99,3 +99,19 @@ def patient_condition_interactions(patient_id: str) -> list[ConditionInteraction
     ]
     interactions.sort(key=lambda interaction: interaction.contribution, reverse=True)
     return interactions
+
+
+@lru_cache(maxsize=1)
+def panel_summary() -> PanelSummaryResponse:
+    """Headline tier counts for the whole panel — a few integers, so the
+    dashboard's summary strip doesn't have to download every patient's score
+    just to count them. Same process-lifetime cache as the rest of this module.
+    """
+    bulk = predict_all_risks_bulk()
+
+    def count(label: str) -> dict[str, int]:
+        return {target: sum(1 for risks in bulk.values() if risks[target].label == label) for target in TARGETS}
+
+    return PanelSummaryResponse(
+        total_patients=len(bulk), high_risk_counts=count("high"), moderate_risk_counts=count("moderate")
+    )

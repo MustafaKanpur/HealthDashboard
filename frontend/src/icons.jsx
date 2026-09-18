@@ -172,6 +172,67 @@ export function IconLink(props) {
   )
 }
 
+export function IconChevronLeft(props) {
+  return (
+    <Icon {...props}>
+      <polyline points="15,5 8,12 15,19" />
+    </Icon>
+  )
+}
+
+export function IconGrid(props) {
+  return (
+    <Icon {...props}>
+      <rect x="4" y="4" width="7" height="7" rx="1.6" />
+      <rect x="13" y="4" width="7" height="7" rx="1.6" />
+      <rect x="4" y="13" width="7" height="7" rx="1.6" />
+      <rect x="13" y="13" width="7" height="7" rx="1.6" />
+    </Icon>
+  )
+}
+
+export function IconStethoscope(props) {
+  return (
+    <Icon {...props}>
+      <path d="M6 3v5a4 4 0 0 0 8 0V3" />
+      <path d="M10 12v2.5a5 5 0 0 0 10 0V13" />
+      <circle cx="20" cy="11" r="2" />
+    </Icon>
+  )
+}
+
+export function IconLightbulb(props) {
+  return (
+    <Icon {...props}>
+      <path d="M9 18h6" />
+      <path d="M10 21h4" />
+      <path d="M12 3a6 6 0 0 0-3.6 10.8c.7.5 1.1 1.3 1.1 2.2h5c0-.9.4-1.7 1.1-2.2A6 6 0 0 0 12 3z" />
+    </Icon>
+  )
+}
+
+export function IconSliders(props) {
+  return (
+    <Icon {...props}>
+      <line x1="4" y1="7" x2="20" y2="7" />
+      <line x1="4" y1="17" x2="20" y2="17" />
+      <circle cx="9" cy="7" r="2.2" fill="currentColor" stroke="none" />
+      <circle cx="15" cy="17" r="2.2" fill="currentColor" stroke="none" />
+    </Icon>
+  )
+}
+
+export function IconCalendar(props) {
+  return (
+    <Icon {...props}>
+      <rect x="4" y="5" width="16" height="15" rx="2" />
+      <line x1="4" y1="10" x2="20" y2="10" />
+      <line x1="9" y1="3" x2="9" y2="7" />
+      <line x1="15" y1="3" x2="15" y2="7" />
+    </Icon>
+  )
+}
+
 export function IconPulse(props) {
   return (
     <Icon {...props}>

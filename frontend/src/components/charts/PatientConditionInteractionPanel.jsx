@@ -21,7 +21,7 @@ function PatientConditionInteractionPanel({ patientId, interactions }) {
   return (
     <ul className="interaction-list" data-patient-id={patientId}>
       {interactions.map((interaction, index) => (
-        <li className="interaction-card" key={index}>
+        <li className="interaction-card reveal" key={index} style={{ '--i': index }}>
           <p>
             Elevated <strong>{interaction.sharedFactor}</strong> is contributing to both{' '}
             {joinConditions(interaction.conditions)} risk for this patient.

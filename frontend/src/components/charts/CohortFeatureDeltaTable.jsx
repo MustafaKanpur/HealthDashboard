@@ -24,12 +24,12 @@ function CohortFeatureDeltaTable({ comparisons }) {
         </tr>
       </thead>
       <tbody>
-        {comparisons.map((comparison) => {
+        {comparisons.map((comparison, index) => {
           const magnitude = Math.min(Math.abs(comparison.percentDifference), MAX_BAR_PERCENT)
           const widthPercent = (magnitude / MAX_BAR_PERCENT) * 100
           const isAbove = comparison.percentDifference >= 0
           return (
-            <tr key={comparison.feature}>
+            <tr key={comparison.feature} style={{ '--i': index }}>
               <td>{comparison.feature}</td>
               <td className="mono">{comparison.patientValue.toFixed(1)}</td>
               <td className="mono">{comparison.cohortAverage.toFixed(1)}</td>

@@ -22,6 +22,8 @@ function DistributionChart({ distribution, patientScore }) {
   const bins = buildBins(distribution)
   const maxCount = Math.max(...bins, 1)
   const patientX = Math.min(1, Math.max(0, patientScore)) * CHART_WIDTH
+  // Keep the label inside the chart when the marker sits near either edge.
+  const labelAnchor = patientX > CHART_WIDTH - 32 ? 'end' : patientX < 32 ? 'start' : 'middle'
 
   return (
     <svg viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`} width="100%" role="img" aria-label="Cohort risk score distribution">
@@ -30,6 +32,8 @@ function DistributionChart({ distribution, patientScore }) {
         return (
           <rect
             key={index}
+            className="cohort-bar"
+            style={{ '--i': index }}
             x={index * BIN_WIDTH + 1}
             y={AXIS_Y - barHeight}
             width={BIN_WIDTH - 2}
@@ -42,11 +46,13 @@ function DistributionChart({ distribution, patientScore }) {
         )
       })}
       <line x1={0} y1={AXIS_Y} x2={CHART_WIDTH} y2={AXIS_Y} stroke={CHART_COLORS.border} />
-      <line x1={patientX} y1={4} x2={patientX} y2={AXIS_Y} stroke={CHART_COLORS.accent} strokeWidth={2} />
-      <polygon points={`${patientX - 5},0 ${patientX + 5},0 ${patientX},7`} fill={CHART_COLORS.accent} />
-      <text x={patientX} y={AXIS_Y + 15} textAnchor="middle" fontSize="10" fontWeight="600" fill={CHART_COLORS.accent}>
-        this patient
-      </text>
+      <g className="cohort-marker">
+        <line x1={patientX} y1={4} x2={patientX} y2={AXIS_Y} stroke={CHART_COLORS.accent} strokeWidth={2} />
+        <polygon points={`${patientX - 5},0 ${patientX + 5},0 ${patientX},7`} fill={CHART_COLORS.accent} />
+        <text x={patientX} y={AXIS_Y + 15} textAnchor={labelAnchor} fontSize="10" fontWeight="600" fill={CHART_COLORS.accent}>
+          this patient
+        </text>
+      </g>
     </svg>
   )
 }

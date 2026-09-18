@@ -14,7 +14,7 @@ function RiskRadarChart({ conditions }) {
       <RadarChart data={conditions} outerRadius="72%">
         <PolarGrid stroke={CHART_COLORS.border} />
         <PolarAngleAxis dataKey="name" tick={{ fill: CHART_COLORS.textMuted, fontSize: 11 }} />
-        <PolarRadiusAxis angle={90} domain={[0, 100]} tick={{ fill: CHART_COLORS.textFaint, fontSize: 10 }} />
+        <PolarRadiusAxis angle={90} domain={[0, 100]} tick={false} axisLine={false} />
         <Radar
           name="Risk score"
           dataKey="riskScore"

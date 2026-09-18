@@ -60,8 +60,9 @@ function ConditionCorrelationHeatmap({ conditions, matrix }) {
               return (
                 <g
                   key={`cell-${rowCondition}-${colCondition}`}
+                  className="heatmap-cell"
                   onMouseMove={(event) => handleMove(event, rowIndex, colIndex, value)}
-                  style={{ cursor: 'pointer' }}
+                  style={{ cursor: 'pointer', '--i': rowIndex + colIndex }}
                 >
                   <rect
                     x={LABEL_SIZE + colIndex * CELL_SIZE}
