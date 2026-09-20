@@ -29,12 +29,43 @@
   color: var(--color-sidebar-text);
 }
 
+/* Header row of the rail: wordmark left, repo link right. */
+.sidebar-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: 20px var(--space-5) 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
 /* Typographic lockup: a wordmark and a rule. No icon, no pulse. */
 .brand {
   display: block;
-  padding: 22px var(--space-5) 18px;
+  min-width: 0;
   color: var(--color-sidebar-text);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+/* Icon control on the dark rail: sized for a comfortable hit target. */
+.sidebar-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  margin: -4px -6px 0 0;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-sm);
+  color: rgba(255, 255, 255, 0.66);
+  transition: color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out),
+    background-color var(--dur-fast) var(--ease-out);
+}
+.sidebar-link:hover {
+  border-color: rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+.sidebar-link:focus-visible {
+  outline-color: #fff;
 }
 .brand:hover {
   color: var(--color-sidebar-text);
@@ -1877,9 +1908,17 @@
     border-right: none;
     border-bottom: 1px solid var(--color-ink);
   }
-  .brand {
-    padding: 12px var(--space-4);
+  .sidebar-head {
+    align-items: center;
+    gap: var(--space-3);
+    padding: 10px var(--space-4);
     border-bottom: none;
+  }
+  .sidebar-link {
+    margin: 0;
+  }
+  .brand {
+    padding: 0;
   }
   .brand-sub,
   .sidebar-label,

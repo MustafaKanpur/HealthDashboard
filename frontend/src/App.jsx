@@ -37,10 +37,22 @@ function App() {
   return (
     <div className="app-shell">
       <aside className="app-sidebar">
-        <Link to="/" className="brand">
-          <span className="brand-name">Vitalis</span>
-          <span className="brand-sub">Chronic risk intelligence</span>
-        </Link>
+        <div className="sidebar-head">
+          <Link to="/" className="brand">
+            <span className="brand-name">Vitalis</span>
+            <span className="brand-sub">Chronic risk intelligence</span>
+          </Link>
+          <a
+            className="sidebar-link"
+            href={REPO_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="View the source on GitHub (opens in a new tab)"
+            title="View the source on GitHub"
+          >
+            <IconGithub size={17} />
+          </a>
+        </div>
 
         <div className="sidebar-label">Workspace</div>
         <nav className="sidebar-nav">
@@ -78,16 +90,6 @@ function App() {
             <span className="topbar-title" aria-hidden="true">
               {pageTitle}
             </span>
-            <a
-              className="topbar-action"
-              href={REPO_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="View the source on GitHub (opens in a new tab)"
-              title="View the source on GitHub"
-            >
-              <IconGithub size={16} />
-            </a>
             <button
               type="button"
               className="topbar-action theme-toggle"
