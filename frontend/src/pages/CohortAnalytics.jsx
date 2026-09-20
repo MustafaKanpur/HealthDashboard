@@ -57,7 +57,7 @@ function CohortAnalytics() {
   return (
     <div>
       <PageHero
-        eyebrow="Population analytics"
+        meta="Population analytics"
         title="How conditions move together"
         subtitle="Across the whole panel, does elevated risk for one condition travel with elevated risk for another?"
       />
@@ -110,7 +110,10 @@ function CohortAnalytics() {
                   <strong>Slate</strong> — one tends to fall as the other rises.
                 </li>
                 <li>
-                  <strong>Near white</strong> — little relationship.
+                  {/* Weak cells blend into the sheet, which is white in light
+                      mode and near-black in dark — so name the behaviour,
+                      not the color. */}
+                  <strong>Faintest cells</strong> — little relationship.
                 </li>
               </ul>
               <p className="legend-footnote">

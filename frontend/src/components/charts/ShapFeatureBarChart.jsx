@@ -1,5 +1,5 @@
 import { Bar, BarChart, CartesianGrid, Cell, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { CHART_COLORS, SHAP_DOWN_COLOR, SHAP_UP_COLOR } from './chartTheme.js'
+import { CHART_COLORS, SHAP_COLORS } from './chartTheme.js'
 import ChartEmptyState from './ChartEmptyState.jsx'
 import ChartTooltip from './ChartTooltip.jsx'
 
@@ -23,14 +23,14 @@ function ShapFeatureBarChart({ shapValues }) {
           <Tooltip content={<ChartTooltip />} cursor={{ fill: CHART_COLORS.surfaceTint }} />
           <Bar dataKey="value" name="SHAP value" radius={3}>
             {sorted.map((entry) => (
-              <Cell key={entry.feature} fill={entry.value >= 0 ? SHAP_UP_COLOR : SHAP_DOWN_COLOR} />
+              <Cell key={entry.feature} fill={entry.value >= 0 ? SHAP_COLORS.up : SHAP_COLORS.down} />
             ))}
           </Bar>
         </BarChart>
       </ResponsiveContainer>
       <div className="chart-legend-row">
-        <span className="chart-legend-dot" style={{ background: SHAP_UP_COLOR }} /> Increases risk
-        <span className="chart-legend-dot" style={{ background: SHAP_DOWN_COLOR }} /> Decreases risk
+        <span className="chart-legend-dot" style={{ background: SHAP_COLORS.up }} /> Increases risk
+        <span className="chart-legend-dot" style={{ background: SHAP_COLORS.down }} /> Decreases risk
       </div>
     </div>
   )

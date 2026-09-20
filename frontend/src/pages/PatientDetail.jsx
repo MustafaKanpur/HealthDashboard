@@ -40,7 +40,6 @@ import Avatar from '../components/ui/Avatar.jsx'
 import Card from '../components/ui/Card.jsx'
 import Tabs from '../components/ui/Tabs.jsx'
 import Skeleton, { SkeletonText } from '../components/ui/Skeleton.jsx'
-import CountUp from '../components/ui/CountUp.jsx'
 
 const RISK_ICON = {
   low: IconCheckCircle,
@@ -229,7 +228,7 @@ function LabTrends({ patientId, labs }) {
           </button>
         ))}
       </div>
-      {loading && !history && <Skeleton height={240} radius={12} style={{ marginTop: 16 }} />}
+      {loading && !history && <Skeleton height={240} radius={0} style={{ marginTop: 16 }} />}
       {error && <div className="error-banner">{error}</div>}
       {history && (
         <div className="lab-trend-charts">
@@ -325,19 +324,19 @@ function CohortComparison({ patientId, riskScores }) {
 function DetailSkeleton() {
   return (
     <div>
-      <Skeleton width={150} height={14} style={{ marginBottom: 24 }} />
+      <Skeleton width={120} height={13} radius={0} style={{ marginBottom: 20 }} />
       <div className="card patient-hero">
-        <Skeleton width={84} height={84} radius={999} />
+        <Skeleton width={56} height={56} radius={999} />
         <div style={{ flex: 1 }}>
-          <Skeleton width="40%" height={28} />
-          <Skeleton width="60%" height={14} style={{ marginTop: 12 }} />
+          <Skeleton width="34%" height={24} radius={0} />
+          <Skeleton width="52%" height={13} radius={0} style={{ marginTop: 10 }} />
         </div>
       </div>
       <div className="risk-cards">
         {[0, 1, 2].map((index) => (
           <div key={index} className="risk-card">
-            <Skeleton width="50%" height={12} />
-            <Skeleton height={120} radius={12} style={{ marginTop: 16 }} />
+            <Skeleton width="45%" height={12} radius={0} />
+            <Skeleton height={120} radius={0} style={{ marginTop: 16 }} />
           </div>
         ))}
       </div>
@@ -453,10 +452,10 @@ function PatientDetail() {
       <section className="card patient-hero reveal" style={{ '--i': 1 }}>
         <div className={`hero-avatar tier-${topRisk.label}`}>
           <span className="hero-avatar-ring" aria-hidden="true" />
-          <Avatar name={patient.name} size={76} />
+          <Avatar name={patient.name} size={56} />
         </div>
         <div className="hero-identity">
-          <div className="eyebrow">Patient chart</div>
+          <div className="hero-eyebrow">Patient chart</div>
           <h1 className="hero-name">{patient.name}</h1>
           <div className="hero-chips">
             <span className="chip">
@@ -482,15 +481,11 @@ function PatientDetail() {
           </div>
           <div className="hero-stat">
             <dt>Active conditions</dt>
-            <dd>
-              <CountUp value={activeConditionCount} className="mono" />
-            </dd>
+            <dd>{activeConditionCount}</dd>
           </div>
           <div className="hero-stat">
             <dt>Active medications</dt>
-            <dd>
-              <CountUp value={activeMedicationCount} className="mono" />
-            </dd>
+            <dd>{activeMedicationCount}</dd>
           </div>
         </dl>
       </section>

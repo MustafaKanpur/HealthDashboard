@@ -240,3 +240,27 @@ export function IconPulse(props) {
     </Icon>
   )
 }
+
+export function IconMoon(props) {
+  return (
+    <Icon {...props}>
+      <path d="M20.5 14.2A8.5 8.5 0 1 1 9.8 3.5a7 7 0 0 0 10.7 10.7z" />
+    </Icon>
+  )
+}
+
+export function IconSun(props) {
+  return (
+    <Icon {...props}>
+      <circle cx="12" cy="12" r="4.2" />
+      <line x1="12" y1="2.5" x2="12" y2="5" />
+      <line x1="12" y1="19" x2="12" y2="21.5" />
+      <line x1="2.5" y1="12" x2="5" y2="12" />
+      <line x1="19" y1="12" x2="21.5" y2="12" />
+      <line x1="5.3" y1="5.3" x2="7.1" y2="7.1" />
+      <line x1="16.9" y1="16.9" x2="18.7" y2="18.7" />
+      <line x1="5.3" y1="18.7" x2="7.1" y2="16.9" />
+      <line x1="16.9" y1="7.1" x2="18.7" y2="5.3" />
+    </Icon>
+  )
+}

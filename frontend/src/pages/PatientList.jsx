@@ -7,7 +7,6 @@ import {
   IconSearch,
   IconSliders,
   IconTrendingUp,
-  IconUsers,
   IconX,
 } from '../icons.jsx'
 import PatientTableSparklines from '../components/charts/PatientTableSparklines.jsx'
@@ -17,7 +16,6 @@ import { CONDITION_LABELS } from '../components/charts/chartTheme.js'
 import PageHero from '../components/ui/PageHero.jsx'
 import Avatar from '../components/ui/Avatar.jsx'
 import Skeleton from '../components/ui/Skeleton.jsx'
-import CountUp, { useCountUp } from '../components/ui/CountUp.jsx'
 
 const PAGE_SIZE = 25
 const TARGET_KEYS = Object.keys(CONDITION_LABELS)
@@ -51,39 +49,26 @@ const EMPTY_FILTERS = {
   riskMinLabel: '',
 }
 
-function greeting() {
-  const hour = new Date().getHours()
-  if (hour < 12) return 'Good morning'
-  if (hour < 18) return 'Good afternoon'
-  return 'Good evening'
-}
+// ISO date, matching how every other date in the record is printed.
+const REPORT_DATE = new Date().toLocaleDateString('en-CA', { year: 'numeric', month: '2-digit', day: '2-digit' })
 
-function RingTile({ label, count, total, index }) {
-  const fraction = total ? count / total : 0
-  const animated = useCountUp(fraction, 1100)
+/** One key/value pair in the panel header strip. */
+function DataCell({ label, marker, value, share }) {
   return (
-    <div className="kpi-tile reveal" style={{ '--i': index }}>
-      <svg className="kpi-ring" viewBox="0 0 44 44" aria-hidden="true">
-        <circle cx="22" cy="22" r="18" className="kpi-ring-track" />
-        <circle
-          cx="22"
-          cy="22"
-          r="18"
-          className="kpi-ring-fill"
-          pathLength="1"
-          strokeDasharray={`${animated} 1`}
-        />
-      </svg>
-      <div>
-        <div className="kpi-label">
-          <span className="kpi-risk-dot" aria-hidden="true" />
-          High risk · {label}
-        </div>
-        <div className="kpi-value">
-          <CountUp value={count} className="mono" />
-          <span className="kpi-share mono">{Math.round(fraction * 100)}%</span>
-        </div>
-      </div>
+    <div className="data-cell">
+      <span className="data-key">
+        {marker && <span className="data-key-marker" aria-hidden="true" />}
+        {label}
+      </span>
+      <span className="data-val mono">
+        {value}
+        {share !== undefined && <span className="data-aside">{share}%</span>}
+      </span>
+      {share !== undefined && (
+        <span className="data-meter" aria-hidden="true">
+          <span style={{ width: `${share}%` }} />
+        </span>
+      )}
     </div>
   )
 }
@@ -108,37 +93,20 @@ function PanelKpis() {
   if (summary === false) return null
 
   return (
-    <section className="kpi-strip" aria-label="Panel summary">
-      <div className="kpi-tile kpi-tile--primary reveal" style={{ '--i': 0 }}>
-        <span className="kpi-icon" aria-hidden="true">
-          <IconUsers size={20} />
-        </span>
-        <div>
-          <div className="kpi-label">Patients in panel</div>
-          <div className="kpi-value">
-            {summary ? <CountUp value={summary.total} className="mono" /> : <Skeleton width={72} height={26} />}
-          </div>
-        </div>
-      </div>
-      {TARGET_KEYS.map((target, index) =>
-        summary ? (
-          <RingTile
-            key={target}
-            label={CONDITION_LABELS[target]}
-            count={summary.high[target]}
-            total={summary.total}
-            index={index + 1}
-          />
-        ) : (
-          <div key={target} className="kpi-tile reveal" style={{ '--i': index + 1 }}>
-            <Skeleton width={44} height={44} radius={999} />
-            <div style={{ flex: 1 }}>
-              <Skeleton width="70%" height={11} />
-              <Skeleton width={60} height={24} style={{ marginTop: 8 }} />
-            </div>
-          </div>
-        )
-      )}
+    <section className="data-strip reveal" aria-label="Panel summary" style={{ '--i': 1 }}>
+      <DataCell
+        label="Patients in panel"
+        value={summary ? summary.total.toLocaleString() : <Skeleton width={64} height={20} radius={0} />}
+      />
+      {TARGET_KEYS.map((target) => (
+        <DataCell
+          key={target}
+          marker
+          label={`High risk · ${CONDITION_LABELS[target]}`}
+          value={summary ? summary.high[target].toLocaleString() : <Skeleton width={48} height={20} radius={0} />}
+          share={summary ? Math.round((summary.high[target] / summary.total) * 100) : undefined}
+        />
+      ))}
     </section>
   )
 }
@@ -201,7 +169,7 @@ function PanelOverview({ search, filters }) {
             </div>
             {points && <span className="panel-overview-count mono">{points.length.toLocaleString()} patients</span>}
           </div>
-          {loading && !points && <Skeleton height={220} radius={12} />}
+          {loading && !points && <Skeleton height={220} radius={0} />}
           {error && <div className="error-banner">{error}</div>}
           {points && (
             <div className="panel-overview-charts">
@@ -331,26 +299,26 @@ function FilterPanel({ open, filters, categories, onChange }) {
 function SkeletonRows() {
   return Array.from({ length: 8 }, (_, index) => (
     <tr key={index} className="skeleton-row">
-      <td>
-        <Skeleton width={16} height={16} radius={4} />
+      <td className="col-check">
+        <Skeleton width={14} height={14} radius={0} />
       </td>
       <td>
         <div className="patient-cell">
-          <Skeleton width={36} height={36} radius={999} />
-          <div style={{ flex: 1 }}>
-            <Skeleton width="55%" height={12} />
-            <Skeleton width="35%" height={10} style={{ marginTop: 6 }} />
-          </div>
+          <Skeleton width={24} height={24} radius={999} />
+          <Skeleton width={130} height={11} radius={0} />
         </div>
       </td>
-      <td>
-        <Skeleton width={28} height={12} />
+      <td className="col-place">
+        <Skeleton width={110} height={11} radius={0} />
       </td>
-      <td>
-        <Skeleton width={22} height={20} radius={999} />
+      <td className="col-num">
+        <Skeleton width={22} height={11} radius={0} />
       </td>
-      <td>
-        <Skeleton width={80} height={20} />
+      <td className="col-sex">
+        <Skeleton width={14} height={11} radius={0} />
+      </td>
+      <td className="col-trend">
+        <Skeleton width={80} height={16} radius={0} />
       </td>
       <td />
     </tr>
@@ -439,7 +407,11 @@ function PatientList({ selectedIds, onToggleSelect }) {
   return (
     <div>
       <PageHero
-        eyebrow={`${greeting()} · ${new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}`}
+        meta={
+          <>
+            Panel as of <span className="mono">{REPORT_DATE}</span>
+          </>
+        }
         title="Patient panel"
         subtitle="Search the panel, open a chart, or select two or more patients to compare them side by side."
       />
@@ -497,9 +469,10 @@ function PatientList({ selectedIds, onToggleSelect }) {
                 <span className="visually-hidden">Select</span>
               </th>
               <th>Patient</th>
-              <th>Age</th>
-              <th>Sex</th>
-              <th>Glucose trend</th>
+              <th className="col-place">Location</th>
+              <th className="col-num">Age</th>
+              <th className="col-sex">Sex</th>
+              <th className="col-trend">Glucose trend</th>
               <th className="col-chevron">
                 <span className="visually-hidden">Open</span>
               </th>
@@ -532,20 +505,16 @@ function PatientList({ selectedIds, onToggleSelect }) {
                     </td>
                     <td>
                       <div className="patient-cell">
-                        <Avatar name={patient.name} />
-                        <div>
-                          <div className="patient-name">{patient.name}</div>
-                          <div className="patient-sub">
-                            {patient.city && patient.state ? `${patient.city}, ${patient.state}` : 'Location unknown'}
-                          </div>
-                        </div>
+                        <Avatar name={patient.name} size={24} />
+                        <span className="patient-name">{patient.name}</span>
                       </div>
                     </td>
-                    <td className="mono">{patient.age}</td>
-                    <td>
-                      <span className="chip">{patient.sex}</span>
+                    <td className="col-place">
+                      {patient.city && patient.state ? `${patient.city}, ${patient.state}` : '—'}
                     </td>
-                    <td>
+                    <td className="col-num">{patient.age}</td>
+                    <td className="col-sex">{patient.sex}</td>
+                    <td className="col-trend">
                       <PatientTableSparklines values={patient.glucose_trend} />
                     </td>
                     <td className="col-chevron">

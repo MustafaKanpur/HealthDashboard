@@ -11,10 +11,10 @@ const R = 80
 const TRACK_WIDTH = 14
 const NEEDLE_LENGTH = R - TRACK_WIDTH / 2 - 8
 
-const BANDS = [
-  { from: 0, to: 33, color: CHART_COLORS.good },
-  { from: 33, to: 66, color: CHART_COLORS.warning },
-  { from: 66, to: 100, color: CHART_COLORS.critical },
+const BAND_RANGES = [
+  { from: 0, to: 33, tier: 'good' },
+  { from: 33, to: 66, tier: 'warning' },
+  { from: 66, to: 100, tier: 'critical' },
 ]
 
 function angleForScore(score) {
@@ -51,21 +51,29 @@ function RiskGauge({ score }) {
   return (
     <div className={`risk-gauge ${tier}`}>
       <svg viewBox="0 0 200 140" width="100%" role="img" aria-label={`Risk score ${Math.round(clamped)} of 100, ${tier}`}>
-        {BANDS.map((band) => (
+        {BAND_RANGES.map((band) => (
           <path
             key={band.from}
             d={describeArc(R, band.from, band.to)}
-            stroke={band.color}
+            stroke={CHART_COLORS[band.tier]}
             strokeWidth={TRACK_WIDTH}
             fill="none"
-            opacity={0.14}
+            opacity={CHART_COLORS.trackOpacity}
           />
         ))}
         {[33, 66].map((tick) => {
           const inner = pointOnArc(R - TRACK_WIDTH / 2 - 3, tick)
           const outer = pointOnArc(R + TRACK_WIDTH / 2 + 3, tick)
           return (
-            <line key={tick} x1={inner.x} y1={inner.y} x2={outer.x} y2={outer.y} stroke="#ffffff" strokeWidth={2} />
+            <line
+              key={tick}
+              x1={inner.x}
+              y1={inner.y}
+              x2={outer.x}
+              y2={outer.y}
+              stroke={CHART_COLORS.surface}
+              strokeWidth={2}
+            />
           )
         })}
         {clamped > 0 && (
@@ -83,7 +91,7 @@ function RiskGauge({ score }) {
           <line x1={CX} y1={CY} x2={CX - NEEDLE_LENGTH} y2={CY} stroke={CHART_COLORS.text} strokeWidth={3} strokeLinecap="round" />
         </g>
         <circle cx={CX} cy={CY} r={7} fill={CHART_COLORS.text} />
-        <circle cx={CX} cy={CY} r={2.5} fill="#ffffff" />
+        <circle cx={CX} cy={CY} r={2.5} fill={CHART_COLORS.surface} />
         <text
           x={CX}
           y={136}

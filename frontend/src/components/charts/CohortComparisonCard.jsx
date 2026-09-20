@@ -38,10 +38,9 @@ function DistributionChart({ distribution, patientScore }) {
             y={AXIS_Y - barHeight}
             width={BIN_WIDTH - 2}
             height={barHeight}
-            rx={2}
-            fill={CHART_COLORS.accentSoft}
+            fill={CHART_COLORS.accentFill}
             stroke={CHART_COLORS.accent}
-            strokeOpacity={0.35}
+            strokeOpacity={0.55}
           />
         )
       })}
@@ -84,17 +83,17 @@ function CohortComparisonCard({
         similar patients.
       </p>
       <div className="cohort-stats-row">
-        <div>
+        <div className="cohort-stat">
           <div className="cohort-stat-label">Patient risk</div>
-          <div className="cohort-stat-value mono">{Math.round(patientRiskScore * 100)}%</div>
+          <div className="cohort-stat-value">{Math.round(patientRiskScore * 100)}%</div>
         </div>
-        <div>
+        <div className="cohort-stat">
           <div className="cohort-stat-label">Cohort average</div>
-          <div className="cohort-stat-value mono">{Math.round(cohortAverageRiskScore * 100)}%</div>
+          <div className="cohort-stat-value">{Math.round(cohortAverageRiskScore * 100)}%</div>
         </div>
-        <div>
+        <div className="cohort-stat">
           <div className="cohort-stat-label">Cohort size</div>
-          <div className="cohort-stat-value mono">{cohortSize}</div>
+          <div className="cohort-stat-value">{cohortSize}</div>
         </div>
       </div>
       <DistributionChart distribution={cohortRiskDistribution} patientScore={patientRiskScore} />

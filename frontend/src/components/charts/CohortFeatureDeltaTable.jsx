@@ -18,8 +18,8 @@ function CohortFeatureDeltaTable({ comparisons }) {
       <thead>
         <tr>
           <th>Feature</th>
-          <th>Patient</th>
-          <th>Cohort avg</th>
+          <th className="num-col">Patient</th>
+          <th className="num-col">Cohort avg</th>
           <th>Difference</th>
         </tr>
       </thead>
@@ -31,8 +31,8 @@ function CohortFeatureDeltaTable({ comparisons }) {
           return (
             <tr key={comparison.feature} style={{ '--i': index }}>
               <td>{comparison.feature}</td>
-              <td className="mono">{comparison.patientValue.toFixed(1)}</td>
-              <td className="mono">{comparison.cohortAverage.toFixed(1)}</td>
+              <td className="num-col">{comparison.patientValue.toFixed(1)}</td>
+              <td className="num-col">{comparison.cohortAverage.toFixed(1)}</td>
               <td>
                 <div className="delta-bar-wrap">
                   <div className={`delta-bar ${isAbove ? 'above' : 'below'}`} style={{ width: `${widthPercent}%` }} />

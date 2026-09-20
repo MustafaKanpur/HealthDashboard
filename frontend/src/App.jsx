@@ -4,9 +4,8 @@ import PatientList from './pages/PatientList.jsx'
 import PatientDetail from './pages/PatientDetail.jsx'
 import ComparePatients from './pages/ComparePatients.jsx'
 import CohortAnalytics from './pages/CohortAnalytics.jsx'
-import AmbientBackground from './components/ui/AmbientBackground.jsx'
-import EcgTrace from './components/ui/EcgTrace.jsx'
-import { IconPulse, IconTarget, IconUsers, IconX } from './icons.jsx'
+import { useTheme } from './components/ui/useTheme.js'
+import { IconMoon, IconSun, IconTarget, IconUsers, IconX } from './icons.jsx'
 import './App.css'
 
 const NAV_ITEMS = [
@@ -16,8 +15,10 @@ const NAV_ITEMS = [
 
 function App() {
   const [selectedIds, setSelectedIds] = useState([])
+  const [theme, toggleTheme] = useTheme()
   const navigate = useNavigate()
   const location = useLocation()
+  const isDark = theme === 'dark'
 
   const toggleSelect = (id) => {
     setSelectedIds((prev) => (prev.includes(id) ? prev.filter((existing) => existing !== id) : [...prev, id]))
@@ -31,30 +32,14 @@ function App() {
 
   return (
     <div className="app-shell">
-      <AmbientBackground />
-
       <aside className="app-sidebar">
-        <div className="sidebar-sheen" aria-hidden="true" />
         <Link to="/" className="brand">
-          <span className="brand-mark">
-            <IconPulse size={18} strokeWidth={2.4} />
-          </span>
-          <span className="brand-text">
-            Vitalis
-            <span className="brand-sub">Chronic risk intelligence</span>
-          </span>
+          <span className="brand-name">Vitalis</span>
+          <span className="brand-sub">Chronic risk intelligence</span>
         </Link>
-        <EcgTrace className="brand-ecg" />
 
         <div className="sidebar-label">Workspace</div>
         <nav className="sidebar-nav">
-          {activeIndex >= 0 && (
-            <span
-              className="nav-indicator"
-              style={{ transform: `translateY(${activeIndex * 48}px)` }}
-              aria-hidden="true"
-            />
-          )}
           {NAV_ITEMS.map((item, index) => {
             const Icon = item.icon
             const active = index === activeIndex
@@ -82,6 +67,19 @@ function App() {
       </aside>
 
       <div className="app-main">
+        <div className="app-topbar">
+          <button
+            type="button"
+            className="theme-toggle"
+            onClick={toggleTheme}
+            aria-pressed={isDark}
+            aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            {isDark ? <IconSun size={16} /> : <IconMoon size={16} />}
+          </button>
+        </div>
+
         <main className="page">
           <div className="page-transition" key={location.pathname}>
             <Routes location={location}>

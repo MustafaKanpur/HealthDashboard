@@ -67,7 +67,7 @@ function ComparePatients() {
     return (
       <div>
         {backLink}
-        <PageHero eyebrow="Side by side" title="Compare patients" />
+        <PageHero meta="Side by side" title="Compare patients" />
         <div className="card empty-panel reveal">
           <span className="empty-panel-icon" aria-hidden="true">
             <IconUsers size={22} />
@@ -85,7 +85,7 @@ function ComparePatients() {
     <div>
       {backLink}
       <PageHero
-        eyebrow="Side by side"
+        meta="Side by side"
         title="Compare patients"
         subtitle={`${ids.length} patients — risk scores, labs and record size in one view.`}
       />
