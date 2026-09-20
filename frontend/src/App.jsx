@@ -5,8 +5,11 @@ import PatientDetail from './pages/PatientDetail.jsx'
 import ComparePatients from './pages/ComparePatients.jsx'
 import CohortAnalytics from './pages/CohortAnalytics.jsx'
 import { useTheme } from './components/ui/useTheme.js'
-import { IconMoon, IconSun, IconTarget, IconUsers, IconX } from './icons.jsx'
+import { PageTitleProvider, usePageTitleState } from './components/ui/pageTitle.jsx'
+import { IconGithub, IconMoon, IconSun, IconTarget, IconUsers, IconX } from './icons.jsx'
 import './App.css'
+
+const REPO_URL = 'https://github.com/MustafaKanpur/HealthDashboard'
 
 const NAV_ITEMS = [
   { to: '/', label: 'Patients', icon: IconUsers, match: (path) => path === '/' || path.startsWith('/patients') || path === '/compare' },
@@ -19,6 +22,7 @@ function App() {
   const navigate = useNavigate()
   const location = useLocation()
   const isDark = theme === 'dark'
+  const [pageTitle, setPageTitle] = usePageTitleState(location.pathname)
 
   const toggleSelect = (id) => {
     setSelectedIds((prev) => (prev.includes(id) ? prev.filter((existing) => existing !== id) : [...prev, id]))
@@ -67,31 +71,50 @@ function App() {
       </aside>
 
       <div className="app-main">
-        <div className="app-topbar">
-          <button
-            type="button"
-            className="theme-toggle"
-            onClick={toggleTheme}
-            aria-pressed={isDark}
-            aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-            title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-          >
-            {isDark ? <IconSun size={16} /> : <IconMoon size={16} />}
-          </button>
-        </div>
+        <header className="app-topbar">
+          <div className="app-topbar-inner">
+            {/* Repeats the page's own heading, so it's decoration for a
+                screen reader, which already has the h1 below. */}
+            <span className="topbar-title" aria-hidden="true">
+              {pageTitle}
+            </span>
+            <a
+              className="topbar-action"
+              href={REPO_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="View the source on GitHub (opens in a new tab)"
+              title="View the source on GitHub"
+            >
+              <IconGithub size={16} />
+            </a>
+            <button
+              type="button"
+              className="topbar-action theme-toggle"
+              onClick={toggleTheme}
+              aria-pressed={isDark}
+              aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+              title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {isDark ? <IconSun size={16} /> : <IconMoon size={16} />}
+            </button>
+          </div>
+        </header>
 
         <main className="page">
-          <div className="page-transition" key={location.pathname}>
-            <Routes location={location}>
-              <Route
-                path="/"
-                element={<PatientList selectedIds={selectedIds} onToggleSelect={toggleSelect} />}
-              />
-              <Route path="/patients/:patientId" element={<PatientDetail />} />
-              <Route path="/compare" element={<ComparePatients />} />
-              <Route path="/analytics" element={<CohortAnalytics />} />
-            </Routes>
-          </div>
+          <PageTitleProvider setPageTitle={setPageTitle}>
+            <div className="page-transition" key={location.pathname}>
+              <Routes location={location}>
+                <Route
+                  path="/"
+                  element={<PatientList selectedIds={selectedIds} onToggleSelect={toggleSelect} />}
+                />
+                <Route path="/patients/:patientId" element={<PatientDetail />} />
+                <Route path="/compare" element={<ComparePatients />} />
+                <Route path="/analytics" element={<CohortAnalytics />} />
+              </Routes>
+            </div>
+          </PageTitleProvider>
         </main>
       </div>
 

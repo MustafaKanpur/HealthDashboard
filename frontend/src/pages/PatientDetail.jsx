@@ -40,6 +40,7 @@ import Avatar from '../components/ui/Avatar.jsx'
 import Card from '../components/ui/Card.jsx'
 import Tabs from '../components/ui/Tabs.jsx'
 import Skeleton, { SkeletonText } from '../components/ui/Skeleton.jsx'
+import { usePageTitle } from '../components/ui/pageTitle.jsx'
 
 const RISK_ICON = {
   low: IconCheckCircle,
@@ -365,6 +366,10 @@ function PatientDetail() {
 
   const [interactions, setInteractions] = useState(null)
   const [interactionsError, setInteractionsError] = useState(null)
+
+  // Names the sticky bar once the chart loads, so scrolling a long record
+  // never leaves you wondering whose chart you're in.
+  usePageTitle(patient?.name)
 
   useEffect(() => {
     let cancelled = false
