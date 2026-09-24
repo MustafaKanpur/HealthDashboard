@@ -7,7 +7,7 @@ from pathlib import Path
 import pandas as pd
 import joblib
 
-from app.ml.features import TARGETS, _full_feature_table, feature_names_for
+from app.ml.features import TARGETS, _full_feature_table, assessable_ids, feature_names_for
 from app.models.schemas import RiskResult
 
 ARTIFACT_DIR = Path(__file__).parent / "artifacts"
@@ -114,7 +114,10 @@ def predict_all_risks_bulk() -> dict[str, dict[str, RiskResult]]:
     target (rather than row-by-row) — faster, and it's what the risk-based
     patient filters in the search endpoint need.
     """
-    table = _full_feature_table()
+    # Only assessable patients are scored; a record added without enough
+    # vitals simply has no entry here, and every caller must treat absence
+    # as "not assessed", never as "not found".
+    table = _full_feature_table().loc[assessable_ids()]
     results: dict[str, dict[str, RiskResult]] = {patient_id: {} for patient_id in table.index}
 
     for target in TARGETS:
@@ -134,9 +137,10 @@ def predict_all_risks_bulk() -> dict[str, dict[str, RiskResult]]:
     return results
 
 
-def predict_risk(patient_id: str, target: str) -> RiskResult:
-    return predict_all_risks_bulk()[patient_id][target]
+def predict_risk(patient_id: str, target: str) -> RiskResult | None:
+    return predict_all_risks_bulk().get(patient_id, {}).get(target)
 
 
 def predict_all_risks(patient_id: str) -> dict[str, RiskResult]:
-    return predict_all_risks_bulk()[patient_id]
+    """All three results, or {} for a patient who hasn't been assessed."""
+    return predict_all_risks_bulk().get(patient_id, {})

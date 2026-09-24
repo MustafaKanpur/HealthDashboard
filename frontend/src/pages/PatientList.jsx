@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { getPanelSummary, getRiskSummary, listConditionCategories, listPatients } from '../api/client.js'
 import {
   IconChevronLeft,
@@ -7,6 +7,7 @@ import {
   IconSearch,
   IconSliders,
   IconTrendingUp,
+  IconUserPlus,
   IconX,
 } from '../icons.jsx'
 import PatientTableSparklines from '../components/charts/PatientTableSparklines.jsx'
@@ -104,7 +105,7 @@ function PanelKpis() {
           marker
           label={`High risk · ${CONDITION_LABELS[target]}`}
           value={summary ? summary.high[target].toLocaleString() : <Skeleton width={48} height={20} radius={0} />}
-          share={summary ? Math.round((summary.high[target] / summary.total) * 100) : undefined}
+          share={summary ? Math.round((summary.high[target] / summary.scored) * 100) : undefined}
         />
       ))}
     </section>
@@ -414,6 +415,12 @@ function PatientList({ selectedIds, onToggleSelect }) {
         }
         title="Patient panel"
         subtitle="Search the panel, open a chart, or select two or more patients to compare them side by side."
+        actions={
+          <Link to="/patients/new" className="btn btn-primary">
+            <IconUserPlus size={15} />
+            Add patient
+          </Link>
+        }
       />
 
       <PanelKpis />
@@ -507,6 +514,12 @@ function PatientList({ selectedIds, onToggleSelect }) {
                       <div className="patient-cell">
                         <Avatar name={patient.name} size={24} />
                         <span className="patient-name">{patient.name}</span>
+                        {patient.source === 'user' && <span className="row-tag">Added</span>}
+                        {!patient.risk_assessed && (
+                          <span className="row-tag row-tag--quiet" title="Added without the vitals needed to score risk">
+                            Not assessed
+                          </span>
+                        )}
                       </div>
                     </td>
                     <td className="col-place">

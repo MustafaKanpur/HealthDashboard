@@ -10,7 +10,7 @@ from functools import lru_cache
 
 import pandas as pd
 
-from app.data.loader import load_patients
+from app.data.loader import SOURCE_USER, load_patients
 from app.data.repository import (
     LAB_LABELS,
     NUMERIC_LABS,
@@ -156,6 +156,62 @@ def _full_feature_table() -> pd.DataFrame:
         index=index,
     )
     return table
+
+
+# --- Assessment eligibility -------------------------------------------------
+#
+# Every model pipeline median-imputes missing inputs, so technically any row
+# can be scored. Which rows *should* be is a policy line, drawn here:
+#
+# - Patients added through the app must supply these four before they're
+#   scored. It's the set nearly every existing record has (1,121 of 1,163),
+#   so a new patient is scored on the same terms as the panel it joins.
+# - Labs stay optional and are imputed when absent, exactly as they already
+#   are for the 61% of existing patients with no glucose on file.
+# - Synthea records are always scored, as they were before this rule existed.
+REQUIRED_FOR_ASSESSMENT = ["systolic_bp", "diastolic_bp", "bmi", "smoking_status"]
+ESTIMABLE_INPUTS = ["glucose", "total_cholesterol", "hdl_cholesterol", "ldl_cholesterol"]
+CLINICAL_INPUTS = REQUIRED_FOR_ASSESSMENT + ESTIMABLE_INPUTS
+
+
+@lru_cache(maxsize=1)
+def assessable_ids() -> pd.Index:
+    """Every patient the risk models score. Anything outside this set has no
+    risk result and is left out of all population analytics built on them
+    (panel summary, correlation matrix, cohorts)."""
+    table = _full_feature_table()
+    source = load_patients()["SOURCE"].reindex(table.index)
+    complete = table[REQUIRED_FOR_ASSESSMENT].notna().all(axis=1)
+    return table.index[(source != SOURCE_USER) | complete]
+
+
+def missing_for_assessment(patient_id: str) -> list[str]:
+    """Required inputs this patient lacks (empty once they're assessable)."""
+    if patient_id in assessable_ids():
+        return []
+    row = _full_feature_table().loc[patient_id]
+    return [feature for feature in REQUIRED_FOR_ASSESSMENT if pd.isna(row[feature])]
+
+
+def estimated_inputs(patient_id: str) -> list[str]:
+    """Clinical inputs the model filled with the panel median for this
+    patient, so the chart can say which parts of a score are estimates."""
+    if patient_id not in assessable_ids():
+        return []
+    row = _full_feature_table().loc[patient_id]
+    return [feature for feature in CLINICAL_INPUTS if pd.isna(row[feature])]
+
+
+@lru_cache(maxsize=1)
+def adult_panel_medians() -> dict[str, float]:
+    """Adult median of each estimable input: what a missing value is filled
+    with. Approximate — each pipeline's imputer was fit on its own training
+    split — but within rounding of all three, which is what the intake form
+    needs to tell a clinician what 'estimated' will mean."""
+    table = _full_feature_table()
+    adults = table.loc[table.index.intersection(assessable_ids())]
+    adults = adults[adults["age"] >= 18]
+    return {feature: float(adults[feature].median()) for feature in ESTIMABLE_INPUTS}
 
 
 def build_training_data(target: str) -> tuple[pd.DataFrame, pd.Series, list[str]]:

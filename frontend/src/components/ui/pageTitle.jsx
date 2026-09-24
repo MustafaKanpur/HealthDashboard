@@ -4,6 +4,9 @@ const SetPageTitleContext = createContext(() => {})
 
 const ROUTE_TITLES = [
   { match: (path) => path === '/', title: 'Patient panel' },
+  // Before the chart pattern: '/patients/new' would otherwise match it.
+  { match: (path) => path === '/patients/new', title: 'Add patient' },
+  { match: (path) => /^\/patients\/[^/]+\/edit$/.test(path), title: 'Edit patient' },
   { match: (path) => path.startsWith('/patients/'), title: 'Patient chart' },
   { match: (path) => path === '/compare', title: 'Compare patients' },
   // Not 'Population analytics': that's the page's own meta line, and the

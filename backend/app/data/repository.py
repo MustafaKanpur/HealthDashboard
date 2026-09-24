@@ -51,6 +51,11 @@ class PatientNotFoundError(Exception):
     pass
 
 
+class PatientNotAssessedError(Exception):
+    """The patient exists but was added without enough measurements to be
+    scored, so there's no risk result (and no cohort) to report."""
+
+
 def _clean_name_part(value: str) -> str:
     """Synthea appends random digits to first/last names for uniqueness
     (e.g. "Damon455"); strip them for display so a single name doesn't read
@@ -189,6 +194,7 @@ def _patient_summary(row: pd.Series) -> PatientSummary:
         sex=row["GENDER"],
         city=row["CITY"] if pd.notna(row["CITY"]) else None,
         state=row["STATE"] if pd.notna(row["STATE"]) else None,
+        source=row["SOURCE"],
     )
 
 
@@ -308,10 +314,24 @@ def _patient_labs(patient_id: str) -> list[LabValue]:
     return labs
 
 
+def _latest_smoking(patient_id: str) -> tuple[str | None, object]:
+    table = latest_lab_series("smoking_status")
+    if patient_id not in table.index:
+        return None, None
+    row = table.loc[patient_id]
+    value = row["VALUE"] if isinstance(row["VALUE"], str) else None
+    return value, (row["DATE"].date() if pd.notna(row["DATE"]) else None)
+
+
 def get_patient_detail(patient_id: str) -> PatientDetailResponse:
     row = _get_patient_row(patient_id)
     reference_date = compute_reference_date(patient_id)
+    smoking_status, smoking_observed_on = _latest_smoking(patient_id)
     return PatientDetailResponse(
+        first_name=_clean_name_part(row["FIRST"]),
+        last_name=_clean_name_part(row["LAST"]),
+        smoking_status=smoking_status,
+        smoking_observed_on=smoking_observed_on,
         id=row["Id"],
         name=_patient_name(row),
         age=compute_age(row["BIRTHDATE"], reference_date),
@@ -323,6 +343,7 @@ def get_patient_detail(patient_id: str) -> PatientDetailResponse:
         marital_status=row["MARITAL"] if pd.notna(row["MARITAL"]) else None,
         city=row["CITY"] if pd.notna(row["CITY"]) else None,
         state=row["STATE"] if pd.notna(row["STATE"]) else None,
+        source=row["SOURCE"],
         conditions=_patient_conditions(patient_id),
         medications=_patient_medications(patient_id),
         labs=_patient_labs(patient_id),

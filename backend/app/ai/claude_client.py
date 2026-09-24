@@ -43,6 +43,10 @@ _SYSTEM_PROMPT = (
     "summary a busy clinician can skim in a few seconds, highlighting anything "
     "notable (elevated risk scores, abnormal labs, relevant condition/medication "
     "history), and suggest general monitoring/follow-up considerations. "
+    "If risk_assessed is false, the risk models were not run for lack of vitals: "
+    "say so and name what's missing, and do not estimate risk yourself. "
+    "Inputs listed in estimated_inputs were filled with a population median, "
+    "so treat scores that lean on them with caution. "
     "You are not diagnosing and must not replace the clinician's judgment."
 )
 

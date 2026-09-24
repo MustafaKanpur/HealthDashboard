@@ -17,7 +17,7 @@ from functools import lru_cache
 
 import pandas as pd
 
-from app.data import PatientNotFoundError
+from app.data import PatientNotFoundError, load_patients
 from app.ml.explain import explain_patient_risk
 from app.ml.features import TARGETS, feature_label
 from app.ml.infer import predict_all_risks_bulk
@@ -71,6 +71,8 @@ def patient_condition_interactions(patient_id: str) -> list[ConditionInteraction
     """
     bulk = predict_all_risks_bulk()
     if patient_id not in bulk:
+        if patient_id in load_patients().index:
+            return []  # exists, but unscored: no elevated conditions to relate
         raise PatientNotFoundError(f"No patient with id {patient_id}")
 
     elevated_targets = [target for target in TARGETS if bulk[patient_id][target].label in ("moderate", "high")]
@@ -113,5 +115,8 @@ def panel_summary() -> PanelSummaryResponse:
         return {target: sum(1 for risks in bulk.values() if risks[target].label == label) for target in TARGETS}
 
     return PanelSummaryResponse(
-        total_patients=len(bulk), high_risk_counts=count("high"), moderate_risk_counts=count("moderate")
+        total_patients=len(load_patients()),
+        scored_patients=len(bulk),
+        high_risk_counts=count("high"),
+        moderate_risk_counts=count("moderate"),
     )

@@ -9,6 +9,7 @@ from .repository import (
     get_patient_detail,
     lab_history,
     recent_lab_trend,
+    PatientNotAssessedError,
     PatientNotFoundError,
 )
 
@@ -26,5 +27,6 @@ __all__ = [
     "LAB_CODES",
     "LAB_LABELS",
     "PatientNotFoundError",
+    "PatientNotAssessedError",
     "CATEGORY_NAMES",
 ]

@@ -4,7 +4,13 @@ async function request(path, options) {
   const response = await fetch(`${API_BASE_URL}${path}`, options)
   if (!response.ok) {
     const body = await response.json().catch(() => ({}))
-    throw new Error(body.detail || `Request failed with status ${response.status}`)
+    // FastAPI sends a string for most errors but a list of per-field issues
+    // for 422s; keep the list on the error so a form can place each one.
+    const message = typeof body.detail === 'string' ? body.detail : `Request failed with status ${response.status}`
+    const error = new Error(message)
+    error.status = response.status
+    error.detail = body.detail
+    throw error
   }
   return response.json()
 }
@@ -61,7 +67,33 @@ export function getRiskSummary({ riskTarget, ...filters } = {}) {
 
 export async function getPanelSummary() {
   const data = await request('/api/analytics/panel-summary')
-  return { total: data.total_patients, high: data.high_risk_counts, moderate: data.moderate_risk_counts }
+  return {
+    total: data.total_patients,
+    // Base for any risk share: patients added without vitals aren't scored.
+    scored: data.scored_patients,
+    high: data.high_risk_counts,
+    moderate: data.moderate_risk_counts,
+  }
+}
+
+export function getIntakeSchema() {
+  return request('/api/patients/intake-schema')
+}
+
+export function updatePatient(patientId, payload) {
+  return request(`/api/patients/${patientId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+}
+
+export function createPatient(payload) {
+  return request('/api/patients', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
 }
 
 export async function getConditionCorrelation() {

@@ -23,8 +23,8 @@ from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
-from app.data import PatientNotFoundError
-from app.ml.features import BASE_FEATURES, TARGETS, _full_feature_table, feature_label
+from app.data import PatientNotAssessedError, PatientNotFoundError, load_patients
+from app.ml.features import BASE_FEATURES, TARGETS, _full_feature_table, assessable_ids, feature_label
 from app.ml.infer import predict_all_risks_bulk
 from app.models.schemas import CohortComparisonResponse, CohortFeatureComparison
 
@@ -45,7 +45,10 @@ def _cluster_assignments() -> pd.Series:
     doesn't invent a new pattern; it recomputes on the next deploy/restart,
     same as everything else here.
     """
-    table = _full_feature_table()
+    # Clustered over scored patients only: an unassessed record is missing
+    # the very vitals the clusters are built on, so it has no cohort and
+    # mustn't shift anyone else's.
+    table = _full_feature_table().loc[assessable_ids()]
     adults = table[table["age"] >= 18]
     X = adults[BASE_FEATURES]
 
@@ -76,7 +79,7 @@ def cohort_comparison(patient_id: str, target: str) -> CohortComparisonResponse:
 
     bulk = predict_all_risks_bulk()
     if patient_id not in bulk:
-        raise PatientNotFoundError(f"No patient with id {patient_id}")
+        _raise_missing_or_unassessed(patient_id)
 
     cohort_ids = _cohort_ids_for(patient_id)
     patient_score = bulk[patient_id][target].score
@@ -104,10 +107,16 @@ def cohort_comparison(patient_id: str, target: str) -> CohortComparisonResponse:
     )
 
 
+def _raise_missing_or_unassessed(patient_id: str):
+    if patient_id in load_patients().index:
+        raise PatientNotAssessedError(f"Patient {patient_id} has not been risk-assessed")
+    raise PatientNotFoundError(f"No patient with id {patient_id}")
+
+
 def cohort_feature_comparison(patient_id: str) -> list[CohortFeatureComparison]:
     table = _full_feature_table()
-    if patient_id not in table.index:
-        raise PatientNotFoundError(f"No patient with id {patient_id}")
+    if patient_id not in assessable_ids():
+        _raise_missing_or_unassessed(patient_id)
 
     cohort_ids = _cohort_ids_for(patient_id)
     if len(cohort_ids) < MIN_COHORT_SIZE:

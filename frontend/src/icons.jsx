@@ -272,3 +272,40 @@ export function IconGithub(props) {
     </Icon>
   )
 }
+
+export function IconCheck(props) {
+  return (
+    <Icon {...props}>
+      <polyline points="4.5,12.5 9.5,17.5 19.5,6.5" />
+    </Icon>
+  )
+}
+
+export function IconPlus(props) {
+  return (
+    <Icon {...props}>
+      <line x1="12" y1="5" x2="12" y2="19" />
+      <line x1="5" y1="12" x2="19" y2="12" />
+    </Icon>
+  )
+}
+
+export function IconUserPlus(props) {
+  return (
+    <Icon {...props}>
+      <circle cx="9" cy="8" r="3.5" />
+      <path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6" />
+      <line x1="19" y1="8" x2="19" y2="14" />
+      <line x1="16" y1="11" x2="22" y2="11" />
+    </Icon>
+  )
+}
+
+export function IconPencil(props) {
+  return (
+    <Icon {...props}>
+      <path d="M16.5 3.5l4 4L8 20H4v-4z" />
+      <line x1="13.5" y1="6.5" x2="17.5" y2="10.5" />
+    </Icon>
+  )
+}

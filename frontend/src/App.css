@@ -1856,6 +1856,578 @@
   color: var(--color-text-faint);
 }
 
+/* --- Add patient -----------------------------------------------------------
+   Validation deliberately never uses red: on this page red means "high
+   risk", and a red message beside a blood-pressure field would read as
+   "this reading is high". Problems are marked by weight instead: a heavy
+   ink border, an x, and words. */
+.page-hero-actions {
+  flex-shrink: 0;
+}
+
+.intake-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: var(--space-5);
+  align-items: start;
+}
+.intake-main > .card:last-child {
+  margin-bottom: 0;
+}
+
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4) var(--space-5);
+}
+.field-grid--narrow {
+  grid-template-columns: minmax(0, 220px);
+}
+.field-pair {
+  display: contents;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+.field-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--color-ink);
+}
+.field-tag {
+  padding: 0 5px;
+  border: 1px solid var(--color-rule-strong);
+  font-size: 10.5px;
+  font-weight: 400;
+  line-height: 16px;
+  color: var(--color-slate);
+}
+.field-tag--required {
+  border-color: var(--color-ink);
+  color: var(--color-ink);
+}
+.field-tag--optional {
+  padding: 0;
+  border-color: transparent;
+  color: var(--color-text-faint);
+}
+.field input[type='text'],
+.field input[type='date'],
+.field input[type='number'],
+.field select,
+.med-row input {
+  width: 100%;
+  height: 32px;
+  padding: 0 9px;
+  border: 1px solid var(--color-rule-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  font-size: 13.5px;
+  color: var(--color-ink);
+  transition: border-color var(--dur-fast) var(--ease-out);
+}
+.field input[type='number'],
+.field input[type='date'] {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.field input:focus,
+.field select:focus,
+.med-row input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: inset 0 0 0 1px var(--color-accent);
+}
+.field.is-invalid input,
+.field.is-invalid select,
+.field.is-invalid .choice-group {
+  border-color: var(--color-ink);
+  box-shadow: inset 0 0 0 1px var(--color-ink);
+}
+.field-hint {
+  font-size: 11.5px;
+  color: var(--color-text-faint);
+}
+.field-error {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-ink);
+}
+
+.input-unit {
+  position: relative;
+  display: flex;
+}
+.input-unit input {
+  padding-right: 60px;
+}
+.input-unit input::-webkit-outer-spin-button,
+.input-unit input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.input-unit input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+.input-unit-label {
+  position: absolute;
+  right: 9px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 11.5px;
+  color: var(--color-text-faint);
+  pointer-events: none;
+}
+
+/* Sex: native radios, styled as one segmented control. */
+.choice-group {
+  display: inline-flex;
+  width: max-content;
+  border: 1px solid var(--color-rule-strong);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.choice {
+  position: relative;
+  padding: 6px 18px;
+  border-left: 1px solid var(--color-rule);
+  background: var(--color-surface);
+  font-size: 13px;
+  color: var(--color-slate);
+  cursor: pointer;
+}
+.choice:first-child {
+  border-left: none;
+}
+.choice input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.choice:hover {
+  background: var(--color-surface-tint);
+  color: var(--color-ink);
+}
+.choice.is-checked {
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+  font-weight: 500;
+}
+.choice:has(input:focus-visible) {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: -2px;
+}
+
+.measure-group {
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-rule);
+}
+.measure-group-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.measure-group-head h4 {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-ink);
+}
+.measure-group-count {
+  font-size: 12px;
+  color: var(--color-slate);
+}
+.measure-group-note {
+  max-width: 640px;
+  margin: 4px 0 var(--space-4);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--color-slate);
+}
+
+.check-group {
+  min-width: 0;
+  margin: 0 0 var(--space-5);
+  padding: 0;
+  border: none;
+}
+.check-group:last-child {
+  margin-bottom: 0;
+}
+.check-group legend {
+  margin-bottom: 8px;
+  padding: 0;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--color-ink);
+}
+.check-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 6px;
+}
+.check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 9px;
+  border: 1px solid var(--color-rule);
+  background: var(--color-surface);
+  font-size: 13px;
+  color: var(--color-ink);
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease-out), background-color var(--dur-fast) var(--ease-out);
+}
+.check:hover {
+  border-color: var(--color-rule-strong);
+}
+.check input {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  accent-color: var(--color-accent);
+}
+.check.is-checked {
+  border-color: var(--color-accent-line);
+  background: var(--color-accent-soft);
+}
+
+.med-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0 0 var(--space-2);
+  padding: 0;
+  list-style: none;
+}
+.med-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.med-row input {
+  flex: 1;
+  max-width: 520px;
+}
+
+/* Error summary: the explicit "can't add" moment, at the top of the form. */
+.form-alert {
+  margin-bottom: var(--space-4);
+  padding: 12px var(--space-4);
+  border: 1px solid var(--color-ink);
+  border-left-width: 4px;
+  background: var(--color-surface);
+}
+.form-alert:focus {
+  outline: none;
+}
+.form-alert-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-ink);
+}
+.form-alert-list {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--color-slate);
+}
+.form-alert-link {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-weight: 500;
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+/* Readiness: the running answer to "what will happen if I add this now?" */
+.readiness {
+  position: sticky;
+  top: 60px;
+  border: 1px solid var(--color-rule);
+  background: var(--color-surface);
+}
+.readiness-block {
+  padding: 12px var(--space-4);
+  border-bottom: 1px solid var(--color-rule);
+}
+.readiness-head {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: 7px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-ink);
+}
+.readiness-head span:last-child {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--color-slate);
+}
+.readiness-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.readiness-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 20px;
+  font-size: 12.5px;
+  color: var(--color-text-faint);
+}
+.readiness-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  border: 1px solid var(--color-rule-strong);
+}
+.readiness-item.is-done {
+  color: var(--color-ink);
+}
+.readiness-item.is-done .readiness-mark {
+  border-color: var(--color-ink);
+  background: var(--color-ink);
+  color: var(--color-surface);
+}
+.readiness-item.is-flagged {
+  font-weight: 500;
+  color: var(--color-ink);
+}
+.readiness-item.is-flagged .readiness-mark {
+  border: 1.5px solid var(--color-ink);
+  color: var(--color-ink);
+}
+.readiness-item.is-estimated {
+  color: var(--color-slate);
+}
+.readiness-item.is-estimated .readiness-mark {
+  border-style: dashed;
+}
+.readiness-detail {
+  margin-left: auto;
+  font-size: 11.5px;
+  color: var(--color-text-faint);
+}
+.readiness-item.is-done .readiness-detail {
+  color: var(--color-slate);
+}
+
+.outcome {
+  margin: var(--space-4) var(--space-4) 0;
+  padding: 10px 12px;
+  border: 1px solid var(--color-rule-strong);
+  border-left-width: 3px;
+}
+.outcome-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-ink);
+}
+.outcome p {
+  margin: 3px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--color-slate);
+}
+.outcome.is-blocked {
+  border-color: var(--color-ink);
+}
+.outcome.is-unassessed {
+  border-left-color: var(--color-slate);
+}
+.outcome.is-assessed {
+  border-color: var(--color-accent-line);
+  border-left-color: var(--color-accent);
+  background: var(--color-accent-soft);
+}
+.readiness-submit {
+  width: calc(100% - 2 * var(--space-4));
+  height: 36px;
+  margin: 12px var(--space-4) var(--space-4);
+}
+
+/* --- Added / unassessed patients elsewhere ------------------------------- */
+.notice {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  padding: 10px var(--space-4);
+  border: 1px solid var(--color-rule);
+  border-left: 2px solid var(--color-accent);
+  background: var(--color-surface);
+}
+.notice-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-ink);
+}
+.notice p {
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  color: var(--color-slate);
+}
+
+.not-assessed p {
+  max-width: 680px;
+  margin: 6px 0 var(--space-4);
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--color-slate);
+}
+.not-assessed-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.not-assessed-list li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  border: 1px solid var(--color-ink);
+  font-size: 12.5px;
+  color: var(--color-ink);
+}
+.unassessed-tag {
+  display: inline-flex;
+  padding: 2px 8px;
+  border: 1px dashed var(--color-rule-strong);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--color-slate);
+}
+.estimate-note {
+  max-width: 820px;
+  margin: calc(-1 * var(--space-2)) 0 var(--space-4);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--color-slate);
+}
+.row-tag {
+  padding: 0 5px;
+  border: 1px solid var(--color-rule-strong);
+  font-size: 11px;
+  line-height: 17px;
+  color: var(--color-slate);
+  white-space: nowrap;
+}
+.row-tag--quiet {
+  border-style: dashed;
+  color: var(--color-text-faint);
+}
+
+/* --- Editing a patient -------------------------------------------------- */
+.chart-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+.chart-toolbar .back-link {
+  margin-bottom: 0;
+}
+.source-note {
+  max-width: 820px;
+  margin: calc(-1 * var(--space-2)) 0 var(--space-4);
+  padding-left: var(--space-3);
+  border-left: 2px solid var(--color-rule-strong);
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--color-slate);
+}
+.record-list {
+  margin: 0 0 var(--space-5);
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--color-rule);
+}
+.record-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: 8px 0;
+  border-bottom: 1px solid var(--color-rule);
+}
+.record-name {
+  font-size: 13px;
+  color: var(--color-ink);
+}
+.record-meta {
+  margin-top: 1px;
+  font-size: 11.5px;
+  color: var(--color-text-faint);
+}
+/* Marked for removal/stopping: struck through, but still readable, so the
+   change is visible until it's saved (or undone). */
+.record-row.is-marked .record-name {
+  color: var(--color-slate);
+  text-decoration: line-through;
+  text-decoration-color: var(--color-ink);
+}
+.record-row.is-marked .record-meta {
+  font-weight: 500;
+  color: var(--color-ink);
+}
+.record-row .btn[aria-pressed='true'] {
+  border-color: var(--color-ink);
+}
+.record-add {
+  margin-top: 0;
+}
+.change-list {
+  margin: 0;
+  padding-left: 16px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--color-ink);
+}
+.readiness-empty {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--color-text-faint);
+}
+.not-assessed-cta {
+  margin-top: var(--space-4);
+}
+
 /* --- Responsive --- */
 @media (max-width: 1180px) {
   .data-strip {
@@ -1881,6 +2453,12 @@
 @media (max-width: 1000px) {
   .risk-cards {
     grid-template-columns: minmax(0, 1fr);
+  }
+  .intake-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .readiness {
+    position: static;
   }
   .patient-hero {
     flex-wrap: wrap;
@@ -1970,6 +2548,13 @@
   }
   .toolbar {
     flex-wrap: wrap;
+  }
+  .page-hero {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+  .field-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
   .patient-table .col-trend,
   .patient-table th.col-trend,

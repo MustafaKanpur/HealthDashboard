@@ -11,12 +11,15 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from fastapi import FastAPI, HTTPException, Query  # noqa: E402
+from fastapi.exceptions import RequestValidationError  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 
 from app.ai import generate_patient_summary  # noqa: E402
+from app.intake import IntakeValidationError, create_patient, intake_schema, update_patient  # noqa: E402
 from app.data import (
     CATEGORY_NAMES,
     LAB_CODES,
+    PatientNotAssessedError,
     PatientNotFoundError,
     ages,
     filter_patient_ids,
@@ -28,11 +31,14 @@ from app.data import (
 from app.ml import (
     SEVERITY_ORDER,
     TARGETS,
+    assessable_ids,
     cohort_comparison,
     cohort_feature_comparison,
     condition_correlation_matrix,
     panel_summary,
+    estimated_inputs,
     explain_patient_risk,
+    missing_for_assessment,
     patient_condition_interactions,
     predict_all_risks,
     predict_all_risks_bulk,
@@ -44,10 +50,13 @@ from app.models import (
     PanelSummaryResponse,
     ConditionInteraction,
     InsightResponse,
+    IntakeSchemaResponse,
     LabHistoryPoint,
     PanelRiskPoint,
     PatientDetailResponse,
     PatientListResponse,
+    NewPatientRequest,
+    PatientUpdateRequest,
     ShapContribution,
     SummaryRequest,
 )
@@ -79,6 +88,17 @@ app.add_middleware(
 )
 
 _TIER_FOR_LABEL = {"low": "low", "moderate": "medium", "high": "high"}
+
+
+def _with_risk(detail):
+    """Scores plus the assessment status the chart needs to explain them:
+    whether they exist at all, what's missing if not, and which inputs were
+    estimates if so."""
+    detail.risk_scores = predict_all_risks(detail.id)
+    detail.risk_assessed = bool(detail.risk_scores)
+    detail.missing_for_assessment = missing_for_assessment(detail.id)
+    detail.estimated_inputs = estimated_inputs(detail.id)
+    return detail
 
 
 @app.get("/health")
@@ -122,7 +142,8 @@ def list_patients(
             raise HTTPException(status_code=400, detail=f"risk_min_label must be one of {list(SEVERITY_ORDER)}")
         bulk = predict_all_risks_bulk()
         threshold = SEVERITY_ORDER[risk_min_label]
-        ids = [pid for pid in ids if SEVERITY_ORDER[bulk[pid][risk_target].label] >= threshold]
+        # An unassessed patient has no risk to meet a threshold with.
+        ids = [pid for pid in ids if pid in bulk and SEVERITY_ORDER[bulk[pid][risk_target].label] >= threshold]
 
     total = len(ids)
     page_ids = ids[offset : offset + limit]
@@ -130,8 +151,44 @@ def list_patients(
     for pid in page_ids:
         summary = summary_for_id(pid)
         summary.glucose_trend = recent_lab_trend(pid, "glucose")
+        if summary.source == "user":
+            summary.risk_assessed = pid in assessable_ids()
         patients.append(summary)
     return PatientListResponse(total=total, patients=patients)
+
+
+@app.get("/api/patients/intake-schema", response_model=IntakeSchemaResponse)
+def patient_intake_schema():
+    """What the add-patient form collects, which fields gate what, the
+    accepted bounds, and what a blank lab will be estimated as."""
+    return intake_schema()
+
+
+@app.post("/api/patients", response_model=PatientDetailResponse, status_code=201)
+def add_patient(request: NewPatientRequest):
+    try:
+        patient_id = create_patient(request)
+    except IntakeValidationError as exc:
+        raise _as_validation_error(exc) from exc
+    return _with_risk(get_patient_detail(patient_id))
+
+
+@app.patch("/api/patients/{patient_id}", response_model=PatientDetailResponse)
+def edit_patient(patient_id: str, request: PatientUpdateRequest):
+    """Correct details, record a new reading, or change diagnoses and
+    medications, for any patient. The Synthea export is never rewritten."""
+    try:
+        update_patient(patient_id, request)
+    except IntakeValidationError as exc:
+        raise _as_validation_error(exc) from exc
+    except PatientNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return _with_risk(get_patient_detail(patient_id))
+
+
+def _as_validation_error(exc: IntakeValidationError) -> RequestValidationError:
+    # Same shape as FastAPI's own 422s, so the forms map both one way.
+    return RequestValidationError([{"type": "value_error", "loc": ("body", exc.field), "msg": str(exc), "input": None}])
 
 
 @app.get("/api/risk-summary", response_model=list[PanelRiskPoint])
@@ -162,6 +219,8 @@ def risk_summary(
 
     points = []
     for pid in ids:
+        if pid not in bulk:
+            continue  # added without enough vitals: not part of risk analytics
         risk = bulk[pid][risk_target]
         points.append(
             PanelRiskPoint(
@@ -203,6 +262,8 @@ def patient_cohort(
         raise HTTPException(status_code=400, detail=f"risk_target must be one of {TARGETS}")
     try:
         return cohort_comparison(patient_id, risk_target)
+    except PatientNotAssessedError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except PatientNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except FileNotFoundError as exc:
@@ -213,6 +274,8 @@ def patient_cohort(
 def patient_cohort_feature_comparison(patient_id: str):
     try:
         return cohort_feature_comparison(patient_id)
+    except PatientNotAssessedError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except PatientNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except FileNotFoundError as exc:
@@ -222,9 +285,7 @@ def patient_cohort_feature_comparison(patient_id: str):
 @app.get("/api/patients/{patient_id}", response_model=PatientDetailResponse)
 def patient_detail(patient_id: str):
     try:
-        detail = get_patient_detail(patient_id)
-        detail.risk_scores = predict_all_risks(patient_id)
-        return detail
+        return _with_risk(get_patient_detail(patient_id))
     except PatientNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except FileNotFoundError as exc:
@@ -257,8 +318,7 @@ def patient_summary(patient_id: str, request: SummaryRequest = SummaryRequest())
     if not os.environ.get("ANTHROPIC_API_KEY"):
         raise HTTPException(status_code=503, detail="AI summary is not configured (missing ANTHROPIC_API_KEY).")
     try:
-        detail = get_patient_detail(patient_id)
-        detail.risk_scores = predict_all_risks(patient_id)
+        detail = _with_risk(get_patient_detail(patient_id))
     except PatientNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except FileNotFoundError as exc:

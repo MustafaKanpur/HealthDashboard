@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom'
 import {
   getCohortFeatureComparison,
   getConditionInteractions,
@@ -25,7 +25,9 @@ import {
   IconStethoscope,
   IconTarget,
   IconTrendingUp,
+  IconPencil,
   IconUsers,
+  IconX,
 } from '../icons.jsx'
 import RiskGauge from '../components/charts/RiskGauge.jsx'
 import RiskRadarChart from '../components/charts/RiskRadarChart.jsx'
@@ -41,6 +43,7 @@ import Card from '../components/ui/Card.jsx'
 import Tabs from '../components/ui/Tabs.jsx'
 import Skeleton, { SkeletonText } from '../components/ui/Skeleton.jsx'
 import { usePageTitle } from '../components/ui/pageTitle.jsx'
+import { MEASUREMENT_LABELS, measurementPhrase } from '../measurements.js'
 
 const RISK_ICON = {
   low: IconCheckCircle,
@@ -322,6 +325,54 @@ function CohortComparison({ patientId, riskScores }) {
   )
 }
 
+/** Shown in place of the risk cards for a patient added without the vitals
+ * the models need: says plainly what didn't happen, and what would fix it. */
+function NotAssessedCard({ missing, patientId }) {
+  return (
+    <section className="card not-assessed reveal">
+      <h3 className="card-title">Risk assessment not run</h3>
+      <p>
+        This patient was added without all the vitals the risk models read. Until{' '}
+        {missing.length === 1 ? 'it is' : 'they are'} recorded, they aren't scored for diabetes, hypertension or heart
+        disease, and aren't part of panel analytics, cohorts or the correlation matrix.
+      </p>
+      <div className="chart-subhead">Still needed</div>
+      <ul className="not-assessed-list">
+        {missing.map((key) => (
+          <li key={key}>
+            <IconX size={12} strokeWidth={2.6} aria-hidden="true" />
+            {MEASUREMENT_LABELS[key] || key}
+          </li>
+        ))}
+      </ul>
+      <Link className="btn btn-primary not-assessed-cta" to={`/patients/${patientId}/edit#measurements`}>
+        Record vitals
+      </Link>
+    </section>
+  )
+}
+
+/** Confirmation after arriving from the add-patient form. */
+function AddedNotice({ assessed, missing, onDismiss }) {
+  return (
+    <div className="notice reveal" role="status">
+      <div>
+        <div className="notice-title">
+          {assessed ? 'Patient added and risk-assessed' : 'Patient added without a risk assessment'}
+        </div>
+        <p>
+          {assessed
+            ? 'Scored on all three conditions and now included in panel analytics, cohorts and the correlation matrix.'
+            : `Listed in the panel but not scored. Missing: ${measurementPhrase(missing)}.`}
+        </p>
+      </div>
+      <button type="button" className="btn btn-ghost btn-icon" onClick={onDismiss} aria-label="Dismiss">
+        <IconX size={14} />
+      </button>
+    </div>
+  )
+}
+
 function DetailSkeleton() {
   return (
     <div>
@@ -347,6 +398,11 @@ function DetailSkeleton() {
 
 function PatientDetail() {
   const { patientId } = useParams()
+  const location = useLocation()
+  // Read once: the confirmation belongs to this arrival, not to later
+  // navigation within the page (tab changes replace the history entry).
+  const [showAddedNotice, setShowAddedNotice] = useState(() => Boolean(location.state?.justAdded))
+  const [editedNotice, setEditedNotice] = useState(() => location.state?.justEdited || null)
   const [searchParams, setSearchParams] = useSearchParams()
   const tab = TABS.some((t) => t.id === searchParams.get('tab')) ? searchParams.get('tab') : 'overview'
   const setTab = (id) => setSearchParams(id === 'overview' ? {} : { tab: id }, { replace: true })
@@ -422,15 +478,18 @@ function PatientDetail() {
   if (!patient) return null
 
   const riskEntries = Object.entries(patient.risk_scores)
-  const [topKey, topRisk] = riskEntries.reduce(
-    (best, entry) =>
-      SEVERITY[entry[1].label] > SEVERITY[best[1].label] ||
-      (SEVERITY[entry[1].label] === SEVERITY[best[1].label] && entry[1].score > best[1].score)
-        ? entry
-        : best,
-    riskEntries[0]
-  )
-  const TopIcon = RISK_ICON[topRisk.label]
+  const assessed = patient.risk_assessed && riskEntries.length > 0
+  const [topKey, topRisk] = assessed
+    ? riskEntries.reduce(
+        (best, entry) =>
+          SEVERITY[entry[1].label] > SEVERITY[best[1].label] ||
+          (SEVERITY[entry[1].label] === SEVERITY[best[1].label] && entry[1].score > best[1].score)
+            ? entry
+            : best,
+        riskEntries[0]
+      )
+    : [null, null]
+  const TopIcon = topRisk ? RISK_ICON[topRisk.label] : null
 
   const radarConditions = riskEntries.map(([key, risk]) => ({
     name: CONDITION_LABELS[key] || key,
@@ -450,12 +509,51 @@ function PatientDetail() {
 
   return (
     <div>
-      <Link className="back-link reveal" to="/">
-        <IconArrowLeft size={15} /> Patient panel
-      </Link>
+      <div className="chart-toolbar reveal">
+        <Link className="back-link" to="/">
+          <IconArrowLeft size={15} /> Patient panel
+        </Link>
+        <Link className="btn btn-sm" to={`/patients/${patient.id}/edit`}>
+          <IconPencil size={14} />
+          Edit patient
+        </Link>
+      </div>
+
+      {editedNotice && (
+        <div className="notice reveal" role="status">
+          <div>
+            <div className="notice-title">
+              {editedNotice.nowAssessed ? 'Changes saved and patient risk-assessed' : 'Changes saved'}
+            </div>
+            <p>
+              {editedNotice.nowAssessed
+                ? 'Scored on all three conditions and now included in panel analytics, cohorts and the correlation matrix.'
+                : assessed
+                  ? 'Scores and panel analytics reflect the updated record.'
+                  : `Still not scored. Missing: ${measurementPhrase(patient.missing_for_assessment)}.`}
+            </p>
+          </div>
+          <button
+            type="button"
+            className="btn btn-ghost btn-icon"
+            onClick={() => setEditedNotice(null)}
+            aria-label="Dismiss"
+          >
+            <IconX size={14} />
+          </button>
+        </div>
+      )}
+
+      {showAddedNotice && (
+        <AddedNotice
+          assessed={assessed}
+          missing={patient.missing_for_assessment}
+          onDismiss={() => setShowAddedNotice(false)}
+        />
+      )}
 
       <section className="card patient-hero reveal" style={{ '--i': 1 }}>
-        <div className={`hero-avatar tier-${topRisk.label}`}>
+        <div className={`hero-avatar ${topRisk ? `tier-${topRisk.label}` : ''}`}>
           <span className="hero-avatar-ring" aria-hidden="true" />
           <Avatar name={patient.name} size={56} />
         </div>
@@ -472,16 +570,21 @@ function PatientDetail() {
               {patient.city && patient.state ? `${patient.city}, ${patient.state}` : 'Location unknown'}
             </span>
             {patient.deceased && <span className="chip chip--muted">Deceased</span>}
+            {patient.source === 'user' && <span className="chip">Added record</span>}
           </div>
         </div>
         <dl className="hero-stats">
           <div className="hero-stat">
             <dt>Highest risk</dt>
             <dd>
-              <span className={`tier-badge ${topRisk.label}`}>
-                <TopIcon size={13} strokeWidth={2.2} />
-                {CONDITION_LABELS[topKey]}
-              </span>
+              {topRisk ? (
+                <span className={`tier-badge ${topRisk.label}`}>
+                  <TopIcon size={13} strokeWidth={2.2} />
+                  {CONDITION_LABELS[topKey]}
+                </span>
+              ) : (
+                <span className="unassessed-tag">Not assessed</span>
+              )}
             </dd>
           </div>
           <div className="hero-stat">
@@ -506,13 +609,22 @@ function PatientDetail() {
         id={`patient-panel-${tab}`}
         aria-labelledby={`patient-${tab}`}
       >
-        {tab === 'overview' && (
+        {tab === 'overview' && !assessed && <NotAssessedCard missing={patient.missing_for_assessment} patientId={patient.id} />}
+
+        {tab === 'overview' && assessed && (
           <>
             <div className="risk-cards">
               {riskEntries.map(([key, risk], index) => (
                 <RiskCard key={key} conditionKey={key} risk={risk} patientId={patient.id} index={index} />
               ))}
             </div>
+            {patient.estimated_inputs.length > 0 && (
+              <p className="estimate-note">
+                No {measurementPhrase(patient.estimated_inputs)} on file, so the models used the panel median for{' '}
+                {patient.estimated_inputs.length === 1 ? 'it' : 'them'}. Scores that lean on those inputs are less
+                certain.
+              </p>
+            )}
             <div className="grid-2">
               <Card icon={IconTarget} title="Risk profile" hint="All three conditions at a glance" index={3}>
                 <RiskRadarChart conditions={radarConditions} />
@@ -637,7 +749,13 @@ function PatientDetail() {
               hint="How this patient's risk compares to clinically similar patients (KMeans cohort)"
               index={0}
             >
-              <CohortComparison patientId={patient.id} riskScores={patient.risk_scores} />
+              {assessed ? (
+                <CohortComparison patientId={patient.id} riskScores={patient.risk_scores} />
+              ) : (
+                <p className="empty-state">
+                  Cohorts are built from scored patients, so this one has none until a risk assessment has run.
+                </p>
+              )}
             </Card>
 
             <Card

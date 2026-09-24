@@ -16,6 +16,13 @@ from .schemas import (
     PatientDetailResponse,
     SummaryRequest,
     InsightResponse,
+    NewPatientRequest,
+    NewPatientMeasurements,
+    NewReading,
+    PatientUpdateRequest,
+    IntakeSchemaResponse,
+    MeasurementSpec,
+    ConditionOption,
 )
 
 __all__ = [
@@ -36,4 +43,11 @@ __all__ = [
     "PatientDetailResponse",
     "SummaryRequest",
     "InsightResponse",
+    "NewPatientRequest",
+    "NewPatientMeasurements",
+    "NewReading",
+    "PatientUpdateRequest",
+    "IntakeSchemaResponse",
+    "MeasurementSpec",
+    "ConditionOption",
 ]

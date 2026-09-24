@@ -2,3 +2,6 @@
 __pycache__/
 *.pyc
 .env
+
+# Patients added through the app (see app/intake.py); local data, not source.
+data/user_added/

@@ -11,7 +11,7 @@ import numpy as np
 import shap
 
 from app.data import PatientNotFoundError
-from app.ml.features import _full_feature_table, feature_names_for
+from app.ml.features import _full_feature_table, assessable_ids, feature_names_for
 from app.ml.infer import _load_pipeline
 from app.models.schemas import ShapContribution
 
@@ -21,7 +21,8 @@ def _explainer_for(target: str):
     pipeline = _load_pipeline(target)
     model = pipeline.named_steps["model"]
     feature_names = feature_names_for(target)
-    background = pipeline.named_steps["impute"].transform(_full_feature_table()[feature_names])
+    scored = _full_feature_table().loc[assessable_ids()]
+    background = pipeline.named_steps["impute"].transform(scored[feature_names])
 
     if type(model).__name__ == "LogisticRegression":
         return "linear", shap.LinearExplainer(model, background), feature_names
@@ -49,6 +50,9 @@ def explain_patient_risk(patient_id: str, target: str) -> list[ShapContribution]
     table = _full_feature_table()
     if patient_id not in table.index:
         raise PatientNotFoundError(f"No patient with id {patient_id}")
+    if patient_id not in assessable_ids():
+        # Nothing was scored, so there's nothing to attribute.
+        return []
 
     pipeline = _load_pipeline(target)
     row = table.loc[[patient_id], feature_names]

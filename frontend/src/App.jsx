@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { Link, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import PatientList from './pages/PatientList.jsx'
 import PatientDetail from './pages/PatientDetail.jsx'
+import AddPatient from './pages/AddPatient.jsx'
+import EditPatient from './pages/EditPatient.jsx'
 import ComparePatients from './pages/ComparePatients.jsx'
 import CohortAnalytics from './pages/CohortAnalytics.jsx'
 import { useTheme } from './components/ui/useTheme.js'
@@ -111,6 +113,8 @@ function App() {
                   path="/"
                   element={<PatientList selectedIds={selectedIds} onToggleSelect={toggleSelect} />}
                 />
+                <Route path="/patients/new" element={<AddPatient />} />
+                <Route path="/patients/:patientId/edit" element={<EditPatient />} />
                 <Route path="/patients/:patientId" element={<PatientDetail />} />
                 <Route path="/compare" element={<ComparePatients />} />
                 <Route path="/analytics" element={<CohortAnalytics />} />
