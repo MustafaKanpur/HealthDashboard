@@ -28,14 +28,6 @@ export function IconSearch(props) {
   )
 }
 
-export function IconFilter(props) {
-  return (
-    <Icon {...props}>
-      <polygon points="4,4 20,4 14,12.5 14,19 10,21 10,12.5" />
-    </Icon>
-  )
-}
-
 export function IconChevronRight(props) {
   return (
     <Icon {...props}>
@@ -218,25 +210,6 @@ export function IconSliders(props) {
       <line x1="4" y1="17" x2="20" y2="17" />
       <circle cx="9" cy="7" r="2.2" fill="currentColor" stroke="none" />
       <circle cx="15" cy="17" r="2.2" fill="currentColor" stroke="none" />
-    </Icon>
-  )
-}
-
-export function IconCalendar(props) {
-  return (
-    <Icon {...props}>
-      <rect x="4" y="5" width="16" height="15" rx="2" />
-      <line x1="4" y1="10" x2="20" y2="10" />
-      <line x1="9" y1="3" x2="9" y2="7" />
-      <line x1="15" y1="3" x2="15" y2="7" />
-    </Icon>
-  )
-}
-
-export function IconPulse(props) {
-  return (
-    <Icon {...props}>
-      <polyline points="2,12 7,12 9.5,5.5 14,18.5 16.5,12 22,12" />
     </Icon>
   )
 }

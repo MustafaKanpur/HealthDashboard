@@ -1,7 +1,6 @@
 fastapi==0.115.6
 uvicorn[standard]==0.34.0
 pydantic==2.10.4
-pydantic-settings==2.7.1
 scikit-learn==1.6.0
 xgboost==2.1.4
 shap==0.52.0
@@ -10,4 +9,3 @@ numpy==2.2.1
 joblib==1.4.2
 anthropic==0.65.0
 python-dotenv==1.0.1
-python-multipart==0.0.20

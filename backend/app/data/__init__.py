@@ -12,21 +12,3 @@ from .repository import (
     PatientNotAssessedError,
     PatientNotFoundError,
 )
-
-__all__ = [
-    "load_patients",
-    "load_conditions",
-    "load_observations",
-    "load_medications",
-    "filter_patient_ids",
-    "summary_for_id",
-    "get_patient_detail",
-    "lab_history",
-    "recent_lab_trend",
-    "ages",
-    "LAB_CODES",
-    "LAB_LABELS",
-    "PatientNotFoundError",
-    "PatientNotAssessedError",
-    "CATEGORY_NAMES",
-]
