@@ -40,6 +40,7 @@ import CohortFeatureDeltaTable from '../components/charts/CohortFeatureDeltaTabl
 import { CONDITION_LABELS } from '../components/charts/chartTheme.js'
 import Avatar from '../components/ui/Avatar.jsx'
 import Card from '../components/ui/Card.jsx'
+import ListPopover from '../components/ui/ListPopover.jsx'
 import Tabs from '../components/ui/Tabs.jsx'
 import Skeleton, { SkeletonText } from '../components/ui/Skeleton.jsx'
 import { usePageTitle } from '../components/ui/pageTitle.jsx'
@@ -502,10 +503,6 @@ function PatientDetail() {
   const filteredMedications = patient.medications.filter(
     (medication) => (medication.active && showActiveMedications) || (!medication.active && showInactiveMedications)
   )
-  const activeConditionCount = patient.conditions.filter((condition) => condition.active).length
-  const activeMedicationCount = new Set(
-    patient.medications.filter((medication) => medication.active).map((medication) => medication.description)
-  ).size
 
   return (
     <div>
@@ -589,11 +586,21 @@ function PatientDetail() {
           </div>
           <div className="hero-stat">
             <dt>Active conditions</dt>
-            <dd>{activeConditionCount}</dd>
+            <dd>
+              <ListPopover
+                entries={patient.conditions.filter((condition) => condition.active)}
+                label="active conditions"
+              />
+            </dd>
           </div>
           <div className="hero-stat">
             <dt>Active medications</dt>
-            <dd>{activeMedicationCount}</dd>
+            <dd>
+              <ListPopover
+                entries={patient.medications.filter((medication) => medication.active)}
+                label="active medications"
+              />
+            </dd>
           </div>
         </dl>
       </section>
