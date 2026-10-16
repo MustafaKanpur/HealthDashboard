@@ -224,11 +224,6 @@
   font-weight: 600;
   color: var(--color-ink);
 }
-.slow-load-note {
-  margin: 2px 0 0;
-  font-size: 12px;
-  color: var(--color-slate);
-}
 .slow-load-failed {
   display: flex;
   align-items: center;

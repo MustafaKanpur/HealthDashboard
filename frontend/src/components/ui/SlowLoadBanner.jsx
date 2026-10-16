@@ -36,7 +36,6 @@ function SlowLoadBanner() {
               <div className="slow-load-fill" />
             </div>
             <p className="slow-load-text">Loading patient data</p>
-            <p className="slow-load-note">This can take 30–50 seconds while the server wakes up.</p>
           </>
         )
       )}
