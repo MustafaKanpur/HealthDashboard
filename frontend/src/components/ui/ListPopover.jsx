@@ -3,12 +3,17 @@ import { useId, useRef } from 'react'
 /** A count that opens a popover listing the names behind it. Takes the same
  * entries the chart panels get (anything with a `description`); duplicates
  * collapse to one name, and the count shown is the number of names listed,
- * so the two can never disagree. The native `popover` attribute handles
+ * so the two can never disagree. Entries that carry a `category` are grouped
+ * under a heading per category. The native `popover` attribute handles
  * opening and closing (click outside, Escape, click the count again). */
 function ListPopover({ entries, label }) {
   const id = useId()
   const popoverRef = useRef(null)
-  const names = [...new Set(entries.map((entry) => entry.description))].sort((a, b) => a.localeCompare(b))
+  const categoryByName = new Map(entries.map((entry) => [entry.description, entry.category]))
+  const names = [...categoryByName.keys()].sort((a, b) => a.localeCompare(b))
+  const groups = [...categoryByName.values()].some(Boolean)
+    ? Object.entries(Object.groupBy(names, (name) => categoryByName.get(name))).sort(([a], [b]) => a.localeCompare(b))
+    : null
 
   if (names.length === 0) return 0
 
@@ -34,13 +39,30 @@ function ListPopover({ entries, label }) {
         {names.length}
       </button>
       <div id={id} ref={popoverRef} popover="auto" className="list-popover" aria-label={label}>
-        <ul>
-          {names.map((name) => (
-            <li key={name}>{name}</li>
-          ))}
-        </ul>
+        {groups ? (
+          groups.map(([category, groupNames], index) => (
+            <div key={category} className="list-popover-group">
+              <div id={`${id}-${index}`} className="list-popover-heading">
+                {category}
+              </div>
+              <NameList names={groupNames} labelledBy={`${id}-${index}`} />
+            </div>
+          ))
+        ) : (
+          <NameList names={names} />
+        )}
       </div>
     </>
+  )
+}
+
+function NameList({ names, labelledBy }) {
+  return (
+    <ul aria-labelledby={labelledBy}>
+      {names.map((name) => (
+        <li key={name}>{name}</li>
+      ))}
+    </ul>
   )
 }
 
