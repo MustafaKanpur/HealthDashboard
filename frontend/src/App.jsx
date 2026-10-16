@@ -8,6 +8,7 @@ import ComparePatients from './pages/ComparePatients.jsx'
 import CohortAnalytics from './pages/CohortAnalytics.jsx'
 import { useTheme } from './components/ui/useTheme.js'
 import { PageTitleProvider, usePageTitleState } from './components/ui/pageTitle.jsx'
+import SlowLoadBanner from './components/ui/SlowLoadBanner.jsx'
 import { IconGithub, IconMoon, IconSun, IconTarget, IconUsers, IconX } from './icons.jsx'
 import './App.css'
 
@@ -103,6 +104,7 @@ function App() {
               {isDark ? <IconSun size={16} /> : <IconMoon size={16} />}
             </button>
           </div>
+          <SlowLoadBanner />
         </header>
 
         <main className="page">

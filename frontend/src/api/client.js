@@ -1,18 +1,48 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
 
-async function request(path, options) {
-  const response = await fetch(`${API_BASE_URL}${path}`, options)
-  if (!response.ok) {
-    const body = await response.json().catch(() => ({}))
-    // FastAPI sends a string for most errors but a list of per-field issues
-    // for 422s; keep the list on the error so a form can place each one.
-    const message = typeof body.detail === 'string' ? body.detail : `Request failed with status ${response.status}`
-    const error = new Error(message)
-    error.status = response.status
-    error.detail = body.detail
-    throw error
+const SLOW_AFTER_MS = 5_000
+const TIMEOUT_MS = 3 * 60_000
+
+// Requests still waiting on the server. The free-tier backend sleeps when
+// idle and the first request after that waits 30-50s for it to wake, so
+// SlowLoadBanner reads this to explain the wait instead of leaving the page
+// looking stuck.
+const pending = new Set()
+let timedOut = false
+
+export function getLoadStatus() {
+  const now = Date.now()
+  return {
+    slow: [...pending].some((entry) => now - entry.start > entry.slowAfter),
+    timedOut,
   }
-  return response.json()
+}
+
+async function request(path, options, slowAfter = SLOW_AFTER_MS) {
+  const entry = { start: Date.now(), slowAfter }
+  const controller = new AbortController()
+  const timer = setTimeout(() => {
+    timedOut = true
+    controller.abort()
+  }, TIMEOUT_MS)
+  pending.add(entry)
+  try {
+    const response = await fetch(`${API_BASE_URL}${path}`, { ...options, signal: controller.signal })
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({}))
+      // FastAPI sends a string for most errors but a list of per-field issues
+      // for 422s; keep the list on the error so a form can place each one.
+      const message = typeof body.detail === 'string' ? body.detail : `Request failed with status ${response.status}`
+      const error = new Error(message)
+      error.status = response.status
+      error.detail = body.detail
+      throw error
+    }
+    return await response.json()
+  } finally {
+    clearTimeout(timer)
+    pending.delete(entry)
+  }
 }
 
 // Shared by listPatients and getRiskSummary, which filter the same patient panel.
@@ -43,11 +73,17 @@ export function getPatient(patientId) {
 }
 
 export function getPatientSummary(patientId, question) {
-  return request(`/api/patients/${patientId}/summary`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ question: question || null }),
-  })
+  return request(
+    `/api/patients/${patientId}/summary`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question: question || null }),
+    },
+    // Claude takes 10-20s even on an awake server, so only a much longer
+    // wait means the server itself is slow.
+    30_000,
+  )
 }
 
 export async function getLabHistory(patientId, labKey) {
